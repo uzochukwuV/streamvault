@@ -1,7 +1,7 @@
 // components/TokenPayment.jsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { useAccount, useWalletClient } from 'wagmi';
 
@@ -15,6 +15,23 @@ export function TokenPayment({defaultAmount = "10" }: TokenPaymentProps) {
   const { data: walletClient } = useWalletClient();
   const [status, setStatus] = useState('');
   const [amount, setAmount] = useState(defaultAmount);
+  const [balance, setBalance] = useState<string>('0');
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!address) return;
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        // TODO: Replace with actual synapse balance check
+        // This is a placeholder - implement actual balance check using synapse-sdk
+        setBalance('0.00');
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+      }
+    };
+
+    fetchBalance();
+  }, [address]);
 
   const handlePayment = async () => {
     if (!walletClient || !amount) return;
@@ -27,6 +44,12 @@ export function TokenPayment({defaultAmount = "10" }: TokenPaymentProps) {
       //TODO: use synapse-sdk to deposite USDFC to synapse
 
       setStatus('✅ Payment successful!');
+      // Refresh balance after successful deposit
+      const fetchBalance = async () => {
+        // TODO: Implement actual balance check
+        setBalance('0.00');
+      };
+      fetchBalance();
     } catch (err) {
       console.error(err);
       setStatus('❌ Transaction failed.');
@@ -39,7 +62,10 @@ export function TokenPayment({defaultAmount = "10" }: TokenPaymentProps) {
 
   return (
     <div className="mt-4 p-4 border rounded-lg">
-      <h3 className="text-lg font-medium mb-4">Deposite USDFC to Synapse</h3>
+      <h3 className="text-lg font-medium mb-2">Deposite USDFC to Synapse</h3>
+      <p className="text-sm text-gray-500 mb-4">
+        Your Synapse Balance: {balance} USDFC
+      </p>
       <input
         type="number"
         value={amount}
