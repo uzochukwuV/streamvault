@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Filecoin Synapse dApp Tutorial
+
+This repo will serve with tutorial to demonstrate how to build a decentralized application (dApp) that interacts with Filecoin Synapse - a smart-contract based marketplace for storage and other services in the Filecoin ecosystem.
+
+## Overview
+
+This dApp showcases:
+- Connecting to Filecoin networks (Mainnet/Calibration)
+- Installing synapse-sdk to your project.
+- Depositing funds to Synapse contracts using USDFC token.
+- Uploading files to Filecoin through Synapse
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- A web3 wallet (like MetaMask)
+- Basic understanding of React and TypeScript
+- Some USDFC tokens on Filecoin Calibration testnet
 
 ## Getting Started
 
-First, run the development server:
-
+1. Clone this repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/fs-upload-app
+cd fs-upload-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Run the development server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) to view the dApp.
+
+## Key Components
+
+### Wallet Connection
+The dApp uses RainbowKit for seamless wallet connection, configured specifically for Filecoin networks:
+- Filecoin Mainnet
+- Filecoin Calibration (testnet)
+
+### USDFC Token Payments
+Demonstrates how to:
+- Depositing funds to Synapse contracts using USDFC token
+
+### File Upload
+Shows how to:
+- Create a user-friendly file upload interface
+- Upload file to Filecoin using synapse-sdk
+- Monitor upload status
+- Download filecoin from Filecoin using synapse-sdk
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+- [Filecoin synapse-sdk](https://github.com/FilOzone/synapse-sdk)
+- [USDFC Token Documentation](https://docs.secured.finance/usdfc-stablecoin/getting-started)
+- [Wagmi Documentation](https://wagmi.sh)
+- [RainbowKit Documentation](https://www.rainbowkit.com)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the LICENSE file for details.
