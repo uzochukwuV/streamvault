@@ -37,7 +37,9 @@ export function FileUploader() {
 
   const handleSubmit = () => {
     if (!file) return;
-    // TODO: Add your file upload logic here using synapse-sdk
+
+    // TODO: upload file to Filecoin using synapse-sdk
+    
     console.log('Uploading file:', file);
   };
 
