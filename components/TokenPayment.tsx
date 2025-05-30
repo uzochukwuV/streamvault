@@ -4,17 +4,13 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { useAccount, useWalletClient } from 'wagmi';
+// TODO: 1. import synapse-sdk
 
-interface TokenPaymentProps {
-  tokenAddress: string;
-  defaultAmount?: string;
-}
-
-export function TokenPayment({defaultAmount = "10" }: TokenPaymentProps) {
+export function TokenPayment() {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const [status, setStatus] = useState('');
-  const [amount, setAmount] = useState(defaultAmount);
+  const [amount, setAmount] = useState("10");
   const [balance, setBalance] = useState<string>('0');
   const [isLoading, setIsLoading] = useState(false);
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
@@ -25,7 +21,7 @@ export function TokenPayment({defaultAmount = "10" }: TokenPaymentProps) {
       setIsBalanceLoading(true);
       const provider = new ethers.BrowserProvider(window.ethereum);
 
-      // TODO: implement actual balance check using synapse-sdk
+      // TODO: 2. implement actual balance check using synapse-sdk
 
       setBalance("1.2");
     } catch (error) {
@@ -53,7 +49,7 @@ export function TokenPayment({defaultAmount = "10" }: TokenPaymentProps) {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      //TODO: deposite USDFC to synapse using synapse-sdk
+      //TODO: 3. deposite USDFC to synapse using synapse-sdk
 
       setStatus('✅ Payment successful!');
       fetchBalance(); // Refresh balance after successful deposit
