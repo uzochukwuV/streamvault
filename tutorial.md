@@ -22,7 +22,7 @@ By following this tutorial, you'll learn how to:
 
 ## Project Setup
 
-We've created a [starter project](https://github.com/longfeiWan9/fs-upload-dapp/tree/starter) for you to focus on learning how to use `synapse-sdk`. However, if you want to start from scratch:
+We've created a [starter project](https://github.com/FIL-Builders/fs-upload-dapp/tree/starter) for you to focus on learning how to use `synapse-sdk`. However, if you want to start from scratch:
 
 1. Create a new Next.js project with the app router:
     ```bash
@@ -44,7 +44,7 @@ We've created a [starter project](https://github.com/longfeiWan9/fs-upload-dapp/
 
 ### 1. Configure Web3 Providers
 
-Let's configure Web3 providers in `app/layout.tsx` (full code is [here](./app/layout.tsx)) using Wagmi and RainbowKit, so we can:
+Let's configure Web3 providers in `app/layout.tsx` (full code is [here](https://github.com/FIL-Builders/fs-upload-dapp/blob/starter/app/layout.tsx)) using Wagmi and RainbowKit, so we can:
 - Ensure the web3 Provider context is available throughout the entire app
 - The providers only mount once and persist across page navigations
 - Config networks (Filecoin mainnet and calibration) are available across components
@@ -121,7 +121,7 @@ Let's create a component that allows users to:
 - Check their USDFC balance in Synapse
 - Deposit USDFC tokens to the Synapse contract
 
-Create `components/TokenPayment.tsx`, you can copy the full code from [here](./components/TokenPayment.tsx).
+Create `components/TokenPayment.tsx`, you can copy the full code from [here](https://github.com/FIL-Builders/fs-upload-dapp/blob/starter/components/TokenPayment.tsx).
 
 The code already has the basic structure ready, We will need to:
 1. Import synapse from synapse-sdk
@@ -152,7 +152,7 @@ Let's create a component that will:
 - Show upload progress and status
 - Handle any errors during the process
 
-Create `components/FileUploader.tsx`, you can copy the full code from [here](./components/FileUploader.tsx).
+Create `components/FileUploader.tsx`, you can copy the full code from [here](https://github.com/FIL-Builders/fs-upload-dapp/blob/starter/components/FileUploader.tsx).
 
 The code already has the basic structure ready, we will need to:
 1. Import and initialize Synapse SDK
@@ -194,7 +194,7 @@ Now we'll combine all our components into a cohesive dApp. The flow of our appli
 2. User deposits USDFC to Synapse (using TokenPayment component)
 3. User uploads files to Filecoin (using FileUploader component)
 
-Let's update `app/page.tsx` to orchestrate these components, you can copy the full code from [here](./app/page.tsx):
+Let's update `app/page.tsx` to orchestrate these components, you can copy the full code from [here](https://github.com/FIL-Builders/fs-upload-dapp/blob/starter/app/page.tsx):
 
 1. Import our components
     ```TypeScript
@@ -220,7 +220,7 @@ Let's update `app/page.tsx` to orchestrate these components, you can copy the fu
     }
     ```
 
-Now we have implemented all the components, and you can also check the [finish branch](https://github.com/longfeiWan9/fs-upload-dapp/tree/finish) with all features implemented. Let's start the dApp by running `npm run dev` and open [http://localhost:3000](http://localhost:3000) to view the dApp.
+Now we have implemented all the components, and you can also check the [finish branch](https://github.com/FIL-Builders/fs-upload-dapp/tree/finish) with all features implemented. Let's start the dApp by running `npm run dev` and open [http://localhost:3000](http://localhost:3000) to view the dApp.
 
 <img width="500" alt="image" src="https://github.com/user-attachments/assets/626d0f37-9861-45e8-ac03-de3ac1752224" />
 
@@ -249,7 +249,7 @@ Now we have implemented all the components, and you can also check the [finish b
 
 ## Resources
 
-- [Synapse SDK Documentation](https://docs.filecoin.io)
+- [Synapse SDK](https://github.com/FilOzone/synapse-sdk)
 - [USDFC Token Contract](https://docs.filecoin.io/smart-contracts/filecoin-evm/reference/erc20-reference/)
 - [Filecoin Network Documentation](https://docs.filecoin.io)
 - [RainbowKit Documentation](https://www.rainbowkit.com)
