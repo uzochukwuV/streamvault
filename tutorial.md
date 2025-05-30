@@ -45,9 +45,9 @@ We've created a [starter project](https://github.com/longfeiWan9/fs-upload-dapp/
 ### 1. Configure Web3 Providers
 
 Let's configure Web3 providers in `app/layout.tsx` (full code is [here](./app/layout.tsx)) using Wagmi and RainbowKit, so we can:
-- Ensure web3 Provider context is available throughout the entire app
+- Ensure the web3 Provider context is available throughout the entire app
 - The providers only mount once and persist across page navigations
-- Config networks (Filecoin mainnet and calibration) available across components
+- Config networks (Filecoin mainnet and calibration) are available across components
 
 ```typescript
 'use client';
@@ -90,7 +90,7 @@ Let's create a Wallet Connection Component using `rainbowkit` so the dApp will a
 - Connect their Web3 wallet (MetaMask, etc.) to the application
 - Switch between different Filecoin networks (mainnet/calibration)
 - View their connected account address and balance
-- Sign any transactions interacting with Synapse service
+- Sign any transactions interacting with the Synapse service
 
 Create `components/ConnectWallet.tsx`:
 
@@ -123,17 +123,17 @@ Let's create a component that allows users to:
 
 Create `components/TokenPayment.tsx`, you can copy the full code from [here](./components/TokenPayment.tsx).
 
-The code already has the basic structure ready, we will need to:
+The code already has the basic structure ready, We will need to:
 1. Import synapse from synapse-sdk
     ```TypeScript
     import { Synapse } from '@filecoin-project/synapse-sdk';
     ```
-2. Implement USDFC balance
+2. Implement the USDFC balance
     ```TypeScript
     const synapse = new Synapse(provider);
     const balance = await synapse.getBalance(address);
     ```
-3. Deposit USDFC to synapse payment contract
+3. Deposit USDFC to the synapse payment contract
     ```TypeScript
     const synapse = new Synapse(signer);
     await synapse.deposit(amount);
@@ -142,7 +142,7 @@ The code already has the basic structure ready, we will need to:
 ### 4. Create File Upload Component
 
 Now that we have wallet connection and USDFC payment set up, we can implement the core functionality - uploading files to Filecoin through Synapse. The Synapse SDK provides a simple interface to:
-- Interact with PDP contracts to create proofset for PDP (Proof of Data Possession) storage
+- Interact with PDP contracts to create a proofset for PDP (Proof of Data Possession) storage
 - Upload files to Filecoin storage with PDP proofset and SP
 - Pay for storage using the previously deposited USDFC
 
@@ -182,8 +182,8 @@ The code already has the basic structure ready, we will need to:
     ```
 
 The Synapse SDK will handle the complex parts under the hood:
-- Request existing proofset or creating a new proofset with PDP contracts
-- Creating storage request with PDP storage providers
+- Request existing proofset or create a new proofset with PDP contracts
+- Creating a storage request with PDP storage providers
 - Managing payment from your USDFC balance
 - Verifying successful storage through PDP
 
@@ -220,7 +220,9 @@ Let's update `app/page.tsx` to orchestrate these components, you can copy the fu
     }
     ```
 
-Now we have implemented all the components and you can also check the [finish branch](https://github.com/longfeiWan9/fs-upload-dapp/tree/finish) with all feature implemented, let's start the dApp by running `npm run dev` and open [http://localhost:3000](http://localhost:3000) to view the dApp.
+Now we have implemented all the components, and you can also check the [finish branch](https://github.com/longfeiWan9/fs-upload-dapp/tree/finish) with all features implemented. Let's start the dApp by running `npm run dev` and open [http://localhost:3000](http://localhost:3000) to view the dApp.
+
+<img width="500" alt="image" src="https://github.com/user-attachments/assets/626d0f37-9861-45e8-ac03-de3ac1752224" />
 
 ## How It Works
 
