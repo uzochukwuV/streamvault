@@ -57,10 +57,7 @@ export default function Home() {
           </div>
           
           {activeTab === 'deposit' && (
-            <TokenPayment
-              defaultAmount="10" 
-              tokenAddress={'0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0'}
-            />
+            <TokenPayment/>
           )}
           {activeTab === 'upload' && <FileUploader />}
         </div>

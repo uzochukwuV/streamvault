@@ -2,6 +2,7 @@
 import { ethers } from 'ethers';
 import { useState, useCallback } from 'react';
 import { useAccount } from 'wagmi';
+// TODO: 1. import synapse-sdk
 
 export function FileUploader() {
   const [file, setFile] = useState<File | null>(null);
@@ -49,7 +50,7 @@ export function FileUploader() {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      // TODO: upload file to Filecoin using synapse-sdk
+      // TODO: 2. upload file to Filecoin using synapse-sdk
 
       setStatus('✅ File uploaded successfully to Filecoin!');
     } catch (err: any) {
