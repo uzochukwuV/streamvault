@@ -27,15 +27,17 @@ To interact with Synapse and upload files, you'll need testnet USDFC (tUSDFC) to
 
 #### Option 1: Mint a Minimum of \$200 tUSDFC
 
-- Use the [official Synapse USDFC Mint](https://app.synapseprotocol.com/mint) page (or relevant dApp).
-- **Note:** The current minting contract enforces a minimum minting amount of \$200 tUSDFC per transaction.
-- You must be connected to the Filecoin Calibration testnet in your wallet.
+* Use the [Secured Finance testnet dApp](https://stg.usdfc.net/) to mint tUSDFC by creating a trove.
+* **Note:** The minting contract currently requires a minimum of \$200 tUSDFC per transaction.
+* For more details, see the [Secured Finance documentation](https://docs.secured.finance/usdfc-stablecoin/getting-started).
+* Make sure your wallet is connected to the Filecoin Calibration testnet.
+
 
 #### Option 2: Use the \$1-at-a-time Testnet Faucet
 
 - [https://forest-explorer.rumcajs.dev/faucet/calibnet_usdfc](https://forest-explorer.rumcajs.dev/faucet/calibnet_usdfc) (by ChainSafe Systems)
 - This faucet allows you to mint **\$1 tUSDFC per request**, which is handy for development or testing with smaller amounts.
-- Enter your Calibration testnet address and click **Mint**. You can repeat the process for additional tUSDFC as needed.
+- Enter your Calibration testnet address and click **Mint**. You may be able to repeat the process for additional tUSDFC if needed.
 
 ---
 
