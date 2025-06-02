@@ -13,6 +13,12 @@ export function FileUploader() {
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [uploadedInfo, setUploadedInfo] = useState<{
+    fileName: string;
+    fileSize: number;
+    commp: string;
+    txHash: string;
+  } | null>(null);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -89,6 +95,12 @@ export function FileUploader() {
 
       setProgress(100);
       setStatus("✅ File uploaded successfully (mock)!");
+      setUploadedInfo({
+        fileName: file.name,
+        fileSize: file.size,
+        commp: commp.toLocaleString(),
+        txHash: txHash,
+      });
     } catch (err: any) {
       console.error(err);
       setStatus(`❌ ${err.message || "Upload failed. Please try again."}`);
@@ -103,12 +115,14 @@ export function FileUploader() {
     setFile(null);
     setStatus("");
     setProgress(0);
+    setUploadedInfo(null);
   };
 
   if (!isConnected) {
     return null;
   }
 
+  console.log(uploadedInfo);
   return (
     <div className="w-full max-w-md">
       <div
@@ -199,6 +213,30 @@ export function FileUploader() {
               ></div>
             </div>
           )}
+        </div>
+      )}
+      {/* Uploaded file info panel */}
+      {uploadedInfo && (
+        <div className="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-4 text-left">
+          <h4 className="font-semibold mb-2">File Upload Details</h4>
+          <div className="text-sm">
+            <div>
+              <span className="font-medium">File name:</span>{" "}
+              {uploadedInfo.fileName}
+            </div>
+            <div>
+              <span className="font-medium">File size:</span>{" "}
+              {uploadedInfo.fileSize.toLocaleString()} bytes
+            </div>
+            <div className="break-all">
+              <span className="font-medium">CommP:</span>{" "}
+              {uploadedInfo.commp}
+            </div>
+            <div className="break-all">
+              <span className="font-medium">Tx Hash:</span>{" "}
+              {uploadedInfo.txHash}
+            </div>
+          </div>
         </div>
       )}
     </div>
