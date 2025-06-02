@@ -6,9 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "cd node_modules/@filoz/synapse-sdk && npm install && npm run build"
   },
   "dependencies": {
+    "@filoz/synapse-sdk": "github:FilOzone/synapse-sdk#rvagg/pdp",
     "@rainbow-me/rainbowkit": "^2.2.5",
     "ethers": "^6.14.3",
     "next": "15.3.2",
