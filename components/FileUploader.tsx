@@ -98,7 +98,7 @@ export function FileUploader() {
       setUploadedInfo({
         fileName: file.name,
         fileSize: file.size,
-        commp: commp,
+        commp: commp.toLocaleString(),
         txHash: txHash,
       });
     } catch (err: any) {
@@ -230,7 +230,7 @@ export function FileUploader() {
             </div>
             <div className="break-all">
               <span className="font-medium">CommP:</span>{" "}
-              {uploadedInfo.commp.toLocaleString()}
+              {uploadedInfo.commp}
             </div>
             <div className="break-all">
               <span className="font-medium">Tx Hash:</span>{" "}
