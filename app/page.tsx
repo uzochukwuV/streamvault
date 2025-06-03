@@ -1,11 +1,12 @@
 "use client";
 import { TokenPayment } from "../components/TokenPayment";
 import { useAccount } from "wagmi";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ConnectWallet } from "../components/ConnectWallet";
 import { FileUploader } from "../components/FileUploader";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "@/components/ui/Confetti";
+import { useConfetti } from "@/hooks/useConfetti";
 
 type Tab = "deposit" | "upload";
 
@@ -35,22 +36,8 @@ const itemVariants = {
 
 export default function Home() {
   const { isConnected } = useAccount();
-  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("deposit");
-  const [showConfetti, setShowConfetti] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const triggerConfetti = () => {
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 5000);
-  };
-
-  if (!mounted) {
-    return null;
-  }
+  const { showConfetti } = useConfetti();
 
   return (
     <>
@@ -157,7 +144,7 @@ export default function Home() {
                       damping: 20,
                     }}
                   >
-                    <TokenPayment triggerConfetti={triggerConfetti} />
+                    <TokenPayment />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -171,7 +158,7 @@ export default function Home() {
                       damping: 20,
                     }}
                   >
-                    <FileUploader triggerConfetti={triggerConfetti} />
+                    <FileUploader />
                   </motion.div>
                 )}
               </AnimatePresence>
