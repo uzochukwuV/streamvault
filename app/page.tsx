@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ConnectWallet } from "../components/ConnectWallet";
 import { FileUploader } from "../components/FileUploader";
 import { motion, AnimatePresence } from "framer-motion";
-import dynamic from "next/dynamic";
+import Confetti from "@/components/ui/Confetti";
 
 type Tab = "deposit" | "upload";
 
@@ -33,8 +33,6 @@ const itemVariants = {
   },
 };
 
-const ReactConfetti = dynamic(() => import("react-confetti"), { ssr: false });
-
 export default function Home() {
   const { isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
@@ -57,7 +55,7 @@ export default function Home() {
   return (
     <>
       {showConfetti && (
-        <ReactConfetti
+        <Confetti
           recycle={false}
           numberOfPieces={200}
           gravity={0.2}
