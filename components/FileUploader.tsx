@@ -145,7 +145,10 @@ export function FileUploader({
         <input
           id="fileInput"
           type="file"
-          onChange={(e) => e.target.files && setFile(e.target.files[0])}
+          onChange={(e) => {
+            e.target.files && setFile(e.target.files[0]);
+            e.target.value = "";
+          }}
           className="hidden"
         />
         <div className="flex flex-col items-center gap-2">
