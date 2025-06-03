@@ -6,7 +6,11 @@ import { ethers } from "ethers";
 import { useAccount, useWalletClient } from "wagmi";
 import { Synapse } from "@filoz/synapse-sdk";
 
-export function TokenPayment() {
+export function TokenPayment({
+  triggerConfetti,
+}: {
+  triggerConfetti: () => void;
+}) {
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
 
@@ -71,6 +75,9 @@ export function TokenPayment() {
       const amt = BigInt(Math.floor(parseFloat(amount) * 10 ** decimals));
 
       await synapse.deposit(amt);
+
+      // Show confetti via parent
+      if (triggerConfetti) triggerConfetti();
 
       setStatus("✅ Payment successful!");
       fetchBalances(); // Refresh balances after deposit

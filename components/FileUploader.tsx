@@ -2,11 +2,14 @@
 import { ethers } from "ethers";
 import { useState, useCallback } from "react";
 import { useAccount } from "wagmi";
-
 import { Synapse } from "@filoz/synapse-sdk";
 import { calculate as calculateCommP } from "@filoz/synapse-sdk/commp";
 
-export function FileUploader() {
+export function FileUploader({
+  triggerConfetti,
+}: {
+  triggerConfetti: () => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { isConnected } = useAccount();
@@ -71,7 +74,7 @@ export function FileUploader() {
       console.log("FIL balance:", balance.toString());
 
       // 4) Create (mock) StorageService
-      //    Because the real StorageService is “pending,” this will return MockStorageService
+      //    Because the real StorageService is "pending," this will return MockStorageService
       const storage = await synapse.createStorage({
         storageProvider: "f01234", // replace with a valid provider ID or leave as mock
       });
@@ -89,7 +92,7 @@ export function FileUploader() {
       setProgress(50);
       setStatus("Finalizing upload...");
 
-      // 8) Wait for “chain commit” (mock)
+      // 8) Wait for "chain commit" (mock)
       const txHash = await uploadTask.done();
       console.log("Mock txHash:", txHash);
 
@@ -101,12 +104,14 @@ export function FileUploader() {
         commp: commp.toLocaleString(),
         txHash: txHash,
       });
+
+      // Show confetti via parent
+      if (triggerConfetti) triggerConfetti();
     } catch (err: any) {
       console.error(err);
       setStatus(`❌ ${err.message || "Upload failed. Please try again."}`);
     } finally {
       setIsLoading(false);
-      // Optionally reset progress after a short delay, or leave at 100%
       setTimeout(() => setProgress(0), 1500);
     }
   };
@@ -172,22 +177,28 @@ export function FileUploader() {
         <button
           onClick={handleSubmit}
           disabled={!file || isLoading}
-          className={`px-6 py-2 rounded-[20px] text-center border-2 border-black transition-all ${
-            !file || isLoading
-              ? "bg-gray-200 border-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-black text-white hover:bg-white hover:text-black"
-          }`}
+          aria-disabled={!file || isLoading}
+          className={`px-6 py-2 rounded-[20px] text-center border-2 transition-all
+            ${
+              !file || isLoading || uploadedInfo
+                ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                : "border-secondary text-secondary hover:bg-secondary/70 hover:text-secondary-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 hover:border-secondary/70 hover:cursor-pointer"
+            }
+          `}
         >
-          {isLoading ? "Uploading..." : "Submit"}
+          {isLoading ? "Uploading..." : !uploadedInfo ? "Submit" : "Submitted"}
         </button>
         <button
           onClick={handleReset}
           disabled={!file || isLoading}
-          className={`px-6 py-2 rounded-[20px] text-center border-2 transition-all ${
-            !file || isLoading
-              ? "border-gray-200 text-gray-400 cursor-not-allowed"
-              : "border-black text-black hover:bg-black hover:text-white"
-          }`}
+          aria-disabled={!file || isLoading}
+          className={`px-6 py-2 rounded-[20px] text-center border-2 transition-all
+            ${
+              !file || isLoading
+                ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                : "border-secondary text-secondary hover:bg-secondary/70 hover:text-secondary-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 hover:border-secondary/70 hover:cursor-pointer"
+            }
+          `}
         >
           Reset
         </button>
@@ -195,20 +206,22 @@ export function FileUploader() {
       {status && (
         <div className="mt-4 text-center">
           <p
-            className={`text-sm ${
-              status.includes("❌")
-                ? "text-red-500"
-                : status.includes("✅")
-                  ? "text-green-500"
-                  : "text-gray-500"
-            }`}
+            className={`text-sm
+              ${
+                status.includes("❌")
+                  ? "text-red-500"
+                  : status.includes("✅")
+                    ? "text-green-500"
+                    : "text-secondary"
+              }
+            `}
           >
             {status}
           </p>
           {isLoading && (
             <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
               <div
-                className="bg-black h-2.5 rounded-full transition-all duration-500"
+                className="bg-primary h-2.5 rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
@@ -217,9 +230,11 @@ export function FileUploader() {
       )}
       {/* Uploaded file info panel */}
       {uploadedInfo && (
-        <div className="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-4 text-left">
-          <h4 className="font-semibold mb-2">File Upload Details</h4>
-          <div className="text-sm">
+        <div className="mt-6 bg-background border border-border rounded-xl p-4 text-left">
+          <h4 className="font-semibold mb-2 text-foreground">
+            File Upload Details
+          </h4>
+          <div className="text-sm text-foreground">
             <div>
               <span className="font-medium">File name:</span>{" "}
               {uploadedInfo.fileName}
@@ -229,8 +244,7 @@ export function FileUploader() {
               {uploadedInfo.fileSize.toLocaleString()} bytes
             </div>
             <div className="break-all">
-              <span className="font-medium">CommP:</span>{" "}
-              {uploadedInfo.commp}
+              <span className="font-medium">CommP:</span> {uploadedInfo.commp}
             </div>
             <div className="break-all">
               <span className="font-medium">Tx Hash:</span>{" "}
