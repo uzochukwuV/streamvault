@@ -53,18 +53,11 @@ export function useFileUpload() {
         signer,
         disableNonceManager: false,
       });
-      const allowance = await pandoraService.checkAllowanceForStorage(
-        5 * 1024 * 1024 * 1024,
-        false,
-        synapse.payments
-      );
-      console.log("allowance", allowance);
 
       // Prepare storage upload
       const preflight = await pandoraService.prepareStorageUpload(
         {
-          // 5GB in bytes to prevent asking for allowance on every upload
-          dataSize: 5 * 1024 * 1024 * 1024,
+          dataSize: file.size,
           withCDN: false,
         },
         synapse.payments
