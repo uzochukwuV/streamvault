@@ -7,8 +7,9 @@ import { FileUploader } from "../components/FileUploader";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "@/components/ui/Confetti";
 import { useConfetti } from "@/hooks/useConfetti";
+import { ViewProofSets } from "@/components/ViewProofSets";
 
-type Tab = "deposit" | "upload";
+type Tab = "deposit" | "upload" | "proof-set";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -129,6 +130,18 @@ export default function Home() {
                 >
                   Upload File
                 </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setActiveTab("proof-set")}
+                  className={`flex-1 py-2 px-4 text-center border-b-2 transition-colors ${
+                    activeTab === "proof-set"
+                      ? "border-primary text-primary-foreground bg-primary"
+                      : "border-transparent text-secondary hover:text-primary hover:bg-secondary/10"
+                  }`}
+                >
+                  Proof Set
+                </motion.button>
               </motion.div>
 
               <AnimatePresence mode="wait">
@@ -146,7 +159,7 @@ export default function Home() {
                   >
                     <TokenPayment />
                   </motion.div>
-                ) : (
+                ) : activeTab === "upload" ? (
                   <motion.div
                     key="upload"
                     initial={{ opacity: 0, x: 20 }}
@@ -160,6 +173,22 @@ export default function Home() {
                   >
                     <FileUploader />
                   </motion.div>
+                ) : (
+                  activeTab === "proof-set" && (
+                    <motion.div
+                      key="proof-set"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 20,
+                      }}
+                    >
+                      <ViewProofSets />
+                    </motion.div>
+                  )
                 )}
               </AnimatePresence>
             </motion.div>
