@@ -1,7 +1,6 @@
 // components/TokenPayment.tsx
 "use client";
 
-import { useState } from "react";
 import { useAccount } from "wagmi";
 import { useBalances } from "@/hooks/useBalances";
 import { usePayment } from "@/hooks/usePayment";
@@ -9,18 +8,30 @@ import { usePayment } from "@/hooks/usePayment";
 export function TokenPayment() {
   const { isConnected } = useAccount();
 
-  const [amount, setAmount] = useState("10");
-
   const {
     data: balances,
     isLoading: isBalanceLoading,
     refetch: refetchBalances,
   } = useBalances();
 
-  const { filBalance, usdfcBalance, paymentsBalance } = balances || {
+  const {
+    filBalance,
+    usdfcBalance,
+    paymentsBalance,
+    persistenceDaysLeft,
+    isSufficient,
+    isRateSufficient,
+    isLockupSufficient,
+    rateNeeded,
+    lockupNeeded,
+  } = balances || {
     filBalance: 0,
     usdfcBalance: 0,
     paymentsBalance: 0,
+    persistenceDaysLeft: 0,
+    isSufficient: false,
+    rateNeeded: 0,
+    lockupNeeded: 0,
   };
 
   const { mutation: paymentMutation, status } = usePayment();
@@ -33,7 +44,20 @@ export function TokenPayment() {
 
   return (
     <div className="mt-4 p-4 border rounded-lg">
-      <h3 className="text-lg font-medium mb-2">Deposit USDFC to Synapse</h3>
+      <div className="flex justify-between items-center pb-3">
+        <h3 className="text-lg font-medium">Deposit USDFC to Synapse</h3>
+        <button
+          className="px-6 py-2 text-sm h-8 flex items-center justify-center rounded-[20px] border-2 border-black transition-all bg-black text-white hover:bg-white hover:text-black"
+          onClick={() => {
+            window.open(
+              "https://forest-explorer.chainsafe.dev/faucet/calibnet_usdfc",
+              "_blank"
+            );
+          }}
+        >
+          USDFC Faucet
+        </button>
+      </div>
       <div className="flex flex-col gap-1 mb-4 text-sm text-gray-500">
         <div>
           <span className="font-medium">FIL wallet balance:</span>{" "}
@@ -53,37 +77,55 @@ export function TokenPayment() {
             ? "Loading..."
             : `${paymentsBalance.toLocaleString()} USDFC`}
         </div>
+        <div>
+          <span className="font-medium">Days until current rate drained:</span>{" "}
+          {isBalanceLoading ? "Loading..." : `${persistenceDaysLeft} days`}
+        </div>
+        <div>
+          <span className="font-medium">Is sufficient:</span>{" "}
+          {isBalanceLoading ? "Loading..." : isSufficient ? "Yes" : "No"}
+        </div>
+        <div>
+          <span className="font-medium">Is rate sufficient:</span>{" "}
+          {isBalanceLoading ? "Loading..." : isRateSufficient ? "Yes" : "No"}
+        </div>
+        <div>
+          <span className="font-medium">Is lockup sufficient:</span>{" "}
+          {isBalanceLoading ? "Loading..." : isLockupSufficient ? "Yes" : "No"}
+        </div>
       </div>
       <div className="flex flex-col sm:flex-row gap-2">
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value === "" || parseFloat(value) >= 0) {
-              setAmount(value);
-            }
-          }}
-          placeholder="Amount"
-          className="border rounded px-3 py-2 flex-grow"
-          min="0"
-          step="0.01"
-          disabled={isProcessingPayment}
-        />
-        <button
-          onClick={async () => {
-            await handlePayment(amount);
-            await refetchBalances();
-          }}
-          disabled={isProcessingPayment || !amount || parseFloat(amount) <= 0}
-          className={`px-6 py-2 rounded-[20px] border-2 border-black transition-all ${
-            isProcessingPayment || !amount || parseFloat(amount) <= 0
-              ? "bg-gray-200 border-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-black text-white hover:bg-white hover:text-black"
-          }`}
-        >
-          {isProcessingPayment ? "Processing..." : "Deposit"}
-        </button>
+        {isSufficient && (
+          <div>
+            You have enough USDFC to cover the storage costs for 100GB for 30
+            days.
+          </div>
+        )}
+        {!isSufficient && (
+          <div className="flex justify-between items-center gap-2">
+            <div className="text-sm w-1/2">
+              You do not have enough USDFC to cover the storage costs for 10GB
+              for 30 days.
+            </div>
+            <button
+              onClick={async () => {
+                await handlePayment({
+                  amount: BigInt(lockupNeeded),
+                  epochRate: BigInt(rateNeeded),
+                });
+                await refetchBalances();
+              }}
+              disabled={isProcessingPayment}
+              className={`px-6 py-2 rounded-[20px] border-2 border-black transition-all ${
+                isProcessingPayment
+                  ? "bg-gray-200 border-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-black text-white hover:bg-white hover:text-black"
+              }`}
+            >
+              {isProcessingPayment ? "Processing..." : "Depotit"}
+            </button>
+          </div>
+        )}
       </div>
       {status && (
         <p
