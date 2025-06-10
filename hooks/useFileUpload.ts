@@ -119,7 +119,6 @@ export function useFileUpload() {
       }
 
       const storageService = await synapse.createStorage({
-        providerId: 1,
         callbacks: {
           onProofSetResolved: (info) => {
             console.log("Proof set resolved:", info);

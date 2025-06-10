@@ -4,6 +4,10 @@
 import { useAccount } from "wagmi";
 import { useBalances } from "@/hooks/useBalances";
 import { usePayment } from "@/hooks/usePayment";
+import {
+  PERSISTENCE_PERIOD_IN_DAYS,
+  NUMBER_OF_GB,
+} from "@/utils";
 
 export function TokenPayment() {
   const { isConnected } = useAccount();
@@ -97,15 +101,15 @@ export function TokenPayment() {
       <div className="flex flex-col sm:flex-row gap-2">
         {isSufficient && (
           <div>
-            You have enough USDFC to cover the storage costs for 100GB for 30
-            days.
+            You have enough USDFC to cover the storage costs for {NUMBER_OF_GB}
+            GB for {PERSISTENCE_PERIOD_IN_DAYS} days.
           </div>
         )}
         {!isSufficient && (
           <div className="flex justify-between items-center gap-2">
             <div className="text-sm w-1/2">
-              You do not have enough USDFC to cover the storage costs for 10GB
-              for 30 days.
+              You do not have enough USDFC to cover the storage costs for{" "}
+              {NUMBER_OF_GB}GB for {PERSISTENCE_PERIOD_IN_DAYS} days.
             </div>
             <button
               onClick={async () => {
