@@ -11,8 +11,8 @@ const formatBalance = (balance: bigint, decimals: number) => {
 };
 
 const ONE_GB_IN_BYTES = 1024 * 1024 * 1024;
-const NUMBER_OF_GB = 100;
-const PERSISTENCE_PERIOD_IN_DAYS = 300n;
+const NUMBER_OF_GB = 10;
+const PERSISTENCE_PERIOD_IN_DAYS = 30n;
 const EPOCHS_PER_DAY = 2880n;
 const PANDORA_PROOF_SET_CREATION_FEE = BigInt(0.2 * 10 ** 18);
 
