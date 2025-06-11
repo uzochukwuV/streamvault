@@ -4,10 +4,7 @@
 import { useAccount } from "wagmi";
 import { useBalances } from "@/hooks/useBalances";
 import { usePayment } from "@/hooks/usePayment";
-import {
-  PERSISTENCE_PERIOD_IN_DAYS,
-  NUMBER_OF_GB,
-} from "@/utils";
+import { PERSISTENCE_PERIOD_IN_DAYS, NUMBER_OF_GB } from "@/utils";
 
 export function TokenPayment() {
   const { isConnected } = useAccount();
@@ -98,7 +95,9 @@ export function TokenPayment() {
           {isBalanceLoading ? "Loading..." : isLockupSufficient ? "Yes" : "No"}
         </div>
       </div>
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div
+        className={`flex flex-col sm:flex-row gap-2 ${isBalanceLoading ? "hidden" : ""}`}
+      >
         {isSufficient && (
           <div>
             You have enough USDFC to cover the storage costs for {NUMBER_OF_GB}
@@ -126,7 +125,7 @@ export function TokenPayment() {
                   : "bg-black text-white hover:bg-white hover:text-black"
               }`}
             >
-              {isProcessingPayment ? "Processing..." : "Depotit"}
+              {isProcessingPayment ? "Processing..." : "Deposit"}
             </button>
           </div>
         )}

@@ -17,12 +17,10 @@ export function useProofsets() {
         CONTRACT_ADDRESSES.PANDORA_SERVICE[network]
       );
       const providers = await pandoraService.getAllApprovedProviders();
-      console.log("providers", providers);
 
       const proofsets = await pandoraService.getClientProofSetsWithDetails(
         signer.address
       );
-      console.log("proofsets", proofsets);
 
       let proofsetDetails = {} as any;
       if (proofsets.length > 0 && providers.length > 0) {
@@ -39,7 +37,6 @@ export function useProofsets() {
                   .then((details) => {
                     return {
                       ...details,
-                      proofset,
                     };
                   })
                   .catch((error) => {
@@ -54,8 +51,6 @@ export function useProofsets() {
         }
       }
 
-      console.log("proofsetDetails", proofsetDetails);
-
       return { proofsets, providers, proofsetDetails };
     },
     enabled: !!signer,
@@ -67,7 +62,7 @@ export const getProofSet = async (
   pdpUrl: string
 ): Promise<any> => {
   try {
-    const response = await fetch(`${pdpUrl}/pdp/proof-sets/${proofsetId}`, {
+    const response = await fetch(`${pdpUrl}pdp/proof-sets/${proofsetId}`, {
       method: "GET",
       headers: {},
     });
@@ -81,6 +76,7 @@ export const getProofSet = async (
     }
 
     const result = (await response.json()) as any;
+    console.log("result", result);
     return result;
   } catch (error) {
     console.error("Error getting proofset details", error);

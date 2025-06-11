@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Synapse, TIME_CONSTANTS, TOKENS } from "@filoz/synapse-sdk";
+import { Synapse, TOKENS } from "@filoz/synapse-sdk";
 import { useEthersProvider } from "@/hooks/useEthers";
 import { useAccount } from "wagmi";
 import { PandoraService } from "@filoz/synapse-sdk/pandora";
@@ -7,15 +7,10 @@ import {
   getPandoraAddress,
   ONE_GB_IN_BYTES,
   NUMBER_OF_GB,
-  PERSISTENCE_PERIOD_IN_DAYS,
-  EPOCHS_PER_DAY,
-  PROOF_SET_CREATION_FEE,
+  calculateStorageMetrics,
+  formatBalance,
 } from "@/utils";
 import { useNetwork } from "@/hooks/useNetwork";
-
-const formatBalance = (balance: bigint, decimals: number) => {
-  return Number(balance) / 10 ** decimals;
-};
 
 export function useBalances() {
   const provider = useEthersProvider();
@@ -44,43 +39,19 @@ export function useBalances() {
         synapse.payments
       );
 
-      const RATE_NEEDED =
-        pandoraBalance.rateAllowanceNeeded - pandoraBalance.currentRateUsed;
-      let LOCKUP_NEEDED =
-        PERSISTENCE_PERIOD_IN_DAYS * EPOCHS_PER_DAY * RATE_NEEDED;
-
-      const LOCKUP_REMAINING =
-        pandoraBalance.currentLockupAllowance >=
-        pandoraBalance.currentLockupUsed
-          ? pandoraBalance.currentLockupAllowance -
-            pandoraBalance.currentLockupUsed
-          : pandoraBalance.currentLockupAllowance;
-      const LOCKUP_DAYS_LEFT =
-        LOCKUP_REMAINING > PROOF_SET_CREATION_FEE
-          ? (LOCKUP_REMAINING - PROOF_SET_CREATION_FEE) /
-            EPOCHS_PER_DAY /
-            RATE_NEEDED
-          : 0n;
-
-      if (LOCKUP_DAYS_LEFT < 10n) {
-        LOCKUP_NEEDED = LOCKUP_NEEDED + LOCKUP_REMAINING;
-      }
-
-      const isRateSufficient =
-        pandoraBalance.currentRateAllowance >= RATE_NEEDED;
-      const isLockupSufficient = LOCKUP_DAYS_LEFT >= 10n;
-      const isSufficient = isRateSufficient && isLockupSufficient;
+      // Use the utility function to calculate storage metrics
+      const storageMetrics = calculateStorageMetrics(pandoraBalance);
 
       return {
         filBalance: formatBalance(filRaw, 18),
         usdfcBalance: formatBalance(usdfcRaw, usdfcDecimals),
         paymentsBalance: formatBalance(paymentsRaw, usdfcDecimals),
-        persistenceDaysLeft: LOCKUP_DAYS_LEFT,
-        isSufficient,
-        isRateSufficient,
-        isLockupSufficient,
-        rateNeeded: RATE_NEEDED,
-        lockupNeeded: LOCKUP_NEEDED,
+        persistenceDaysLeft: storageMetrics.persistenceDaysLeft,
+        isSufficient: storageMetrics.isSufficient,
+        isRateSufficient: storageMetrics.isRateSufficient,
+        isLockupSufficient: storageMetrics.isLockupSufficient,
+        rateNeeded: storageMetrics.rateNeeded,
+        lockupNeeded: storageMetrics.lockupNeeded,
       };
     },
   });

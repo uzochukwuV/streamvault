@@ -13,6 +13,8 @@ By following this tutorial, you'll learn how to:
 - Integrate Synapse SDK into your dApp to access Filecoin Synapse services:
   - Manage USDFC token deposits and balances
   - Upload files to Filecoin storage using PDP under the hood
+- Add light/dark mode with a reusable `ThemeProvider`
+- Display fun confetti animations after successful actions
 
 ## Prerequisites
 
@@ -60,13 +62,14 @@ We've created a [starter project](https://github.com/FIL-Builders/fs-upload-dapp
 2. Install required dependencies:
 
    ```bash
-   npm install wagmi viem @rainbow-me/rainbowkit ethers
+   npm install wagmi viem @rainbow-me/rainbowkit \
+     @tanstack/react-query framer-motion react-confetti ethers
    ```
 
-   Most importantly, install `synapse-sdk`:
+   Most importantly, install `synapse-sdk` from npm:
 
    ```bash
-   npm install @filecoin-project/synapse-sdk
+   npm install @filoz/synapse-sdk
    ```
 
 ## Implementing the dApp
@@ -80,32 +83,48 @@ Let's configure Web3 providers in `app/layout.tsx` (full code is [here](https://
 - Config networks (Filecoin mainnet and calibration) are available across components
 
 ```typescript
-'use client';
-import { WagmiProvider } from 'wagmi';
-import { filecoin, filecoinCalibration } from 'wagmi/chains';
-import { http, createConfig } from '@wagmi/core';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+"use client";
+import "./globals.css";
+import { WagmiProvider } from "wagmi";
+import { filecoin, filecoinCalibration } from "wagmi/chains";
+import { http, createConfig } from "@wagmi/core";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import "@rainbow-me/rainbowkit/styles.css";
+import { Navbar } from "@/components/ui/Navbar";
+import { ThemeProvider } from "@/providers/ThemeProvider";
+import { ConfettiProvider } from "@/providers/ConfettiProvider";
+
+const queryClient = new QueryClient();
 
 const config = createConfig({
   chains: [filecoinCalibration, filecoin],
+  connectors: [],
   transports: {
     [filecoin.id]: http(),
-    [filecoinCalibration.id]: http()
-  }
+    [filecoinCalibration.id]: http(),
+  },
 });
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <QueryClientProvider client={new QueryClient()}>
-          <WagmiProvider config={config}>
-            <RainbowKitProvider modalSize="compact">
-              {children}
-            </RainbowKitProvider>
-          </WagmiProvider>
-        </QueryClientProvider>
+        <ThemeProvider>
+          <ConfettiProvider>
+            <QueryClientProvider client={queryClient}>
+              <WagmiProvider config={config}>
+                <RainbowKitProvider
+                  modalSize="compact"
+                  initialChain={filecoinCalibration.id}
+                >
+                  <Navbar />
+                  {children}
+                </RainbowKitProvider>
+              </WagmiProvider>
+            </QueryClientProvider>
+          </ConfettiProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
@@ -225,36 +244,98 @@ The Synapse SDK will handle the complex parts under the hood:
 - Managing payment from your USDFC balance
 - Verifying successful storage through PDP
 
-### 5. Put It All Together
+### 5. Create a Proof Set Viewer
+
+The latest version of the dApp includes a tab for viewing your PDP proof sets.
+We'll create a component that lists proof sets returned from the Pandora
+service:
+
+```typescript
+"use client";
+import { useAccount } from "wagmi";
+import { useProofsets } from "@/hooks/useProofsets";
+
+export function ViewProofSets() {
+  const { isConnected } = useAccount();
+  const { data, isLoading } = useProofsets();
+
+  if (!isConnected) return null;
+
+  return (
+    <div className="mt-4 p-4 border rounded-lg">
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : data && data.proofsets?.length ? (
+        data.proofsets.map((p) => (
+          <pre key={p.railId} className="text-sm overflow-auto">
+            {JSON.stringify(p, null, 2)}
+          </pre>
+        ))
+      ) : (
+        <p>No proof sets found</p>
+      )}
+    </div>
+  );
+}
+```
+
+### 6. Put It All Together
 
 Now we'll combine all our components into a cohesive dApp. The flow of our application will be:
 
-1. User connects their wallet (using ConnectWallet component)
-2. User deposits USDFC to Synapse (using TokenPayment component)
-3. User uploads files to Filecoin (using FileUploader component)
+1. User connects their wallet (using `ConnectWallet`)
+2. User deposits USDFC to Synapse (using `TokenPayment`)
+3. User uploads files to Filecoin (using `FileUploader`)
+4. User can inspect existing proof sets (using `ViewProofSets`)
 
 Let's update `app/page.tsx` to orchestrate these components, you can copy the full code from [here](https://github.com/FIL-Builders/fs-upload-dapp/blob/starter/app/page.tsx):
 
 1. Import our components
    ```TypeScript
-   import { ConnectWallet } from '../components/ConnectWallet';
-   import { TokenPayment } from '../components/TokenPayment';
-   import { FileUploader } from '../components/FileUploader';
+   import { ConnectWallet } from "../components/ConnectWallet";
+   import { TokenPayment } from "../components/TokenPayment";
+   import { FileUploader } from "../components/FileUploader";
+   import { ViewProofSets } from "../components/ViewProofSets";
+   import { motion, AnimatePresence } from "framer-motion";
    ```
-2. Create the main page layout
+2. Create the main page layout with animated tabs and confetti
    ```TypeScript
    export default function Home() {
+     const { isConnected } = useAccount();
+     const [activeTab, setActiveTab] = useState<"deposit" | "upload" | "proof-set">("deposit");
+     const { showConfetti } = useConfetti();
+
      return (
-       <main className="p-8">
-         <h1 className="text-4xl font-bold mb-8 text-center">
-           dApp powered by synapse-sdk
-         </h1>
-         <ConnectWallet />
-         <div className="mt-8 max-w-md mx-auto space-y-8">
-           <TokenPayment />
-           <FileUploader />
-         </div>
-       </main>
+       <>
+         {showConfetti && <Confetti recycle={false} numberOfPieces={200} gravity={0.2} />}
+         <motion.main className="flex flex-col items-center p-8 mt-16" initial="hidden" animate="visible">
+           <motion.h1 className="text-4xl font-bold mb-8 text-center" variants={itemVariants}>
+             Demo dApp Powered by synapse-sdk
+           </motion.h1>
+           <AnimatePresence mode="wait">
+             {!isConnected ? (
+               <ConnectWallet />
+             ) : (
+               <motion.div className="mt-8 w-full max-w-md" variants={itemVariants}>
+                 <div className="flex mb-6">
+                   <button onClick={() => setActiveTab("deposit")}>Deposit USDFC</button>
+                   <button onClick={() => setActiveTab("upload")}>Upload File</button>
+                   <button onClick={() => setActiveTab("proof-set")}>Proof Set</button>
+                 </div>
+                 <AnimatePresence mode="wait">
+                   {activeTab === "deposit" ? (
+                     <TokenPayment />
+                   ) : activeTab === "upload" ? (
+                     <FileUploader />
+                   ) : (
+                     <ViewProofSets />
+                   )}
+                 </AnimatePresence>
+               </motion.div>
+             )}
+           </AnimatePresence>
+         </motion.main>
+       </>
      );
    }
    ```
@@ -280,6 +361,12 @@ Now we have implemented all the components, and you can also check the [finish b
    - Users select a file to upload
    - The file is uploaded to Filecoin through Synapse
    - Storage is paid for with deposited USDFC
+4. **Proof Sets**:
+   - Users can view proof sets created for their uploads
+   - Details come directly from the Pandora service
+
+The app also supports a light/dark theme toggle and shows confetti animations on
+successful payments and uploads.
 
 ## Next Steps
 

@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Synapse, CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
+import { Synapse } from "@filoz/synapse-sdk";
 import { useEthersSigner } from "@/hooks/useEthers";
 import { useConfetti } from "@/hooks/useConfetti";
-import { PandoraService } from "@filoz/synapse-sdk/pandora";
 import { useAccount } from "wagmi";
-import { useNetwork } from "./useNetwork";
-import { getPandoraAddress, getUSDFCID } from "@/utils";
-import { usePublicClient } from "wagmi";
-import { Hex } from "viem";
+import { useNetwork } from "@/hooks/useNetwork";
+import { preflightCheck } from "@/utils/preflightCheck";
+import { getBestProofset } from "@/utils/getBestProofset";
 
 export function useFileUpload() {
   const [progress, setProgress] = useState(0);
@@ -24,7 +22,6 @@ export function useFileUpload() {
   const { triggerConfetti } = useConfetti();
   const { address, chainId } = useAccount();
   const { data: network } = useNetwork();
-  const publicClient = usePublicClient();
   const mutation = useMutation({
     mutationKey: ["file-upload", address, chainId],
     mutationFn: async (file: File) => {
@@ -32,7 +29,6 @@ export function useFileUpload() {
       if (!address) throw new Error("Address not found");
       if (!chainId) throw new Error("Chain ID not found");
       if (!network) throw new Error("Network not found");
-      if (!publicClient) throw new Error("Public client not found");
       setProgress(0);
       setUploadedInfo(null);
       setStatus("Preparing upload...");
@@ -42,83 +38,27 @@ export function useFileUpload() {
       // 2) Convert ArrayBuffer → Uint8Array
       const uint8ArrayBytes = new Uint8Array(arrayBuffer);
 
-      setStatus("Checking upload USDFC allowance...");
-
-      const pandoraService = new PandoraService(
-        signer.provider,
-        CONTRACT_ADDRESSES.PANDORA_SERVICE[network]
-      );
-
       const synapse = await Synapse.create({
-        signer,
+        provider: signer.provider,
         disableNonceManager: false,
       });
 
-      // Prepare storage upload
-      const preflight = await pandoraService.prepareStorageUpload(
-        {
-          dataSize: file.size,
-          withCDN: false,
-        },
-        synapse.payments
+      const { providerId } = await getBestProofset(signer, network, address);
+
+      const withProofset = !!providerId;
+
+      // Check if we have enough USDFC to cover the storage costs and deposit if not
+      await preflightCheck(
+        file,
+        synapse,
+        network,
+        withProofset,
+        setStatus,
+        setProgress
       );
-      console.log("preflight", preflight);
-
-      if (!preflight.allowanceCheck.sufficient) {
-        const monthlyLockupAllowance = preflight.estimatedCost.perMonth;
-        const proofSetCreationFee = BigInt(0.2 * 10 ** 18);
-
-        const requiredAllowance = monthlyLockupAllowance + proofSetCreationFee;
-
-        const tokenBalance = await synapse.payments.balance();
-        const tokenAllowance =
-          (await synapse.payments.allowance(
-            getUSDFCID(),
-            getPandoraAddress(network)
-          )) ?? BigInt(0);
-        if (tokenBalance < requiredAllowance) {
-          let txHash = "";
-          if (tokenAllowance < requiredAllowance) {
-            setStatus("Approving service to spend USDFC...");
-            txHash = await synapse.payments.approve(
-              getUSDFCID(),
-              getPandoraAddress(network),
-              requiredAllowance
-            );
-            await publicClient.waitForTransactionReceipt({
-              hash: txHash as Hex,
-              confirmations: 2,
-            });
-          }
-
-          setStatus("USDFC approved");
-          setProgress(5);
-
-          setStatus("Depositing USDFC to cover storage costs...");
-          txHash = await synapse.payments.deposit(requiredAllowance);
-          await publicClient.waitForTransactionReceipt({
-            hash: txHash as Hex,
-          });
-
-          setStatus("USDFC deposited");
-          setProgress(10);
-        }
-
-        setStatus("Approving Pandora service USDFC spending rates...");
-        const txHash = await synapse.payments.approveService(
-          getPandoraAddress(network),
-          preflight.estimatedCost.perEpoch,
-          proofSetCreationFee
-        );
-        await publicClient.waitForTransactionReceipt({
-          hash: txHash as Hex,
-          confirmations: 2,
-        });
-        setStatus("Pandora service approved to spend USDFC");
-        setProgress(20);
-      }
 
       const storageService = await synapse.createStorage({
+        providerId,
         callbacks: {
           onProofSetResolved: (info) => {
             console.log("Proof set resolved:", info);
@@ -148,8 +88,9 @@ export function useFileUpload() {
       setStatus("Uploading file...");
       setProgress(30);
 
-      const { commp, size } = await storageService.upload(uint8ArrayBytes, {
+      const { commp } = await storageService.upload(uint8ArrayBytes, {
         onUploadComplete: (commp) => {
+          console.log("Upload complete with commp:", commp);
           setStatus("Upload completed starting adding roots...");
           setProgress(80);
         },
