@@ -52,9 +52,9 @@ Shows how to:
 
 ### Pay For Storage with USDFC
 Demonstrates how to:
-- Pay for storage by depositing funds to Synapse contracts using USDFC toke
+- Pay for storage by depositing funds to Synapse contracts using USDFC token
 - Handles one time payment for 10GB usage that persists 30days
-- Notifies repayment if less than 10days remain for paying synapse
+- Notifies repayment if less than 10days remain for paying synapse based on current usage
 - hook used to conduct a payment [link](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/usePayment.ts)
 
 ### File Upload
