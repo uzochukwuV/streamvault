@@ -1,8 +1,6 @@
 "use client";
 import { useState, useCallback } from "react";
 import { useAccount } from "wagmi";
-// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-// import { calculate as calculateCommP } from "@filoz/synapse-sdk/commp";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
 export function FileUploader() {

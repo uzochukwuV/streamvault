@@ -27,20 +27,12 @@ export const preflightCheck = async (
   );
 
   if (!preflight.sufficient) {
-    const tenDaysLockupAllowance =
-      preflight.lockupAllowanceNeeded - preflight.currentLockupUsed;
-
-    const oneMonthLockupAllowance = tenDaysLockupAllowance * 30n;
-
     const proofSetCreationFee = withProofset
       ? BigInt(0.2 * 10 ** 18)
       : BigInt(0);
 
     const allowanceNeeded =
-      oneMonthLockupAllowance +
-      proofSetCreationFee +
-      preflight.currentLockupUsed;
-
+      preflight.lockupAllowanceNeeded + proofSetCreationFee;
     setStatus("Approving & depositing USDFC to cover storage costs...");
     await synapse.payments.deposit(allowanceNeeded);
 
