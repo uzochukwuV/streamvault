@@ -2,12 +2,12 @@
 import { TokenPayment } from "../components/TokenPayment";
 import { useAccount } from "wagmi";
 import { useState } from "react";
-import { ConnectWallet } from "../components/ConnectWallet";
 import { FileUploader } from "../components/FileUploader";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "@/components/ui/Confetti";
 import { useConfetti } from "@/hooks/useConfetti";
 import { ViewProofSets } from "@/components/ViewProofSets";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 type Tab = "deposit" | "upload" | "proof-set";
 
@@ -93,7 +93,7 @@ export default function Home() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <ConnectWallet />
+                <ConnectButton />
               </motion.div>
               <motion.p variants={itemVariants} className="mt-8 text-secondary">
                 Please connect your wallet to upload dApp

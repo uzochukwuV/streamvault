@@ -11,7 +11,11 @@ export const ConfettiContext = createContext<ConfettiContextType | undefined>(
   undefined
 );
 
-export function ConfettiProvider({ children }: { children: React.ReactNode }) {
+export const ConfettiProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [showConfetti, setShowConfetti] = useState(false);
 
   const triggerConfetti = () => {
@@ -31,4 +35,4 @@ export function ConfettiProvider({ children }: { children: React.ReactNode }) {
       {children}
     </ConfettiContext.Provider>
   );
-}
+};

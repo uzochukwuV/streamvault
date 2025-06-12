@@ -2,17 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Synapse, TOKENS } from "@filoz/synapse-sdk";
 import { useEthersProvider } from "@/hooks/useEthers";
 import { useAccount } from "wagmi";
-import { PandoraService } from "@filoz/synapse-sdk/pandora";
-import {
-  getPandoraAddress,
-  ONE_GB_IN_BYTES,
-  NUMBER_OF_GB,
-  calculateStorageMetrics,
-  formatBalance,
-} from "@/utils";
+import { calculateStorageMetrics } from "@/utils/pandoraCalculations";
 import { useNetwork } from "@/hooks/useNetwork";
+import { formatUnits } from "viem";
+import { config } from "@/config";
 
-export function useBalances() {
+export const useBalances = () => {
   const provider = useEthersProvider();
   const { address } = useAccount();
   const { data: network } = useNetwork();
@@ -29,29 +24,23 @@ export function useBalances() {
       );
       const paymentsRaw: bigint = await synapse.payments.balance(TOKENS.USDFC);
       const usdfcDecimals: number = synapse.payments.decimals(TOKENS.USDFC);
-      const pandoraService = new PandoraService(
-        provider,
-        getPandoraAddress(network)
-      );
-      const pandoraBalance = await pandoraService.checkAllowanceForStorage(
-        NUMBER_OF_GB * ONE_GB_IN_BYTES,
-        false,
-        synapse.payments
-      );
 
       // Use the utility function to calculate storage metrics
-      const storageMetrics = calculateStorageMetrics(pandoraBalance);
+      const storageMetrics = await calculateStorageMetrics(synapse);
+
+      const storageUsageMessage = ` ${storageMetrics.currentStorageGB.toFixed(3)} GB / ${config.storageCapacity} GB.`;
 
       return {
-        filBalance: formatBalance(filRaw, 18),
-        usdfcBalance: formatBalance(usdfcRaw, usdfcDecimals),
-        paymentsBalance: formatBalance(paymentsRaw, usdfcDecimals),
+        filBalance: formatUnits(filRaw, 18),
+        usdfcBalance: formatUnits(usdfcRaw, usdfcDecimals),
+        pandoraBalance: formatUnits(paymentsRaw, usdfcDecimals),
         persistenceDaysLeft: storageMetrics.persistenceDaysLeft,
         isSufficient: storageMetrics.isSufficient,
         isRateSufficient: storageMetrics.isRateSufficient,
         isLockupSufficient: storageMetrics.isLockupSufficient,
         rateNeeded: storageMetrics.rateNeeded,
         lockupNeeded: storageMetrics.lockupNeeded,
+        storageUsageMessage,
       };
     },
   });

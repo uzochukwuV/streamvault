@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { useAccount } from "wagmi";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
-export function FileUploader() {
+export const FileUploader = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { isConnected } = useAccount();
@@ -182,4 +182,4 @@ export function FileUploader() {
       )}
     </div>
   );
-}
+};

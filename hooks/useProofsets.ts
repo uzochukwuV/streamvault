@@ -4,7 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
 import { useNetwork } from "@/hooks/useNetwork";
 
-export function useProofsets() {
+/**
+ * Get all proofsets for a given signer.
+ * @returns The proofsets.
+ */
+export const useProofsets = () => {
   const signer = useEthersSigner();
   const { data: network } = useNetwork();
   return useQuery({
@@ -55,8 +59,14 @@ export function useProofsets() {
     },
     enabled: !!signer,
   });
-}
+};
 
+/**
+ * Get a proofset from the curio provider API.
+ * @param proofsetId - The ID of the proofset.
+ * @param pdpUrl - The URL of the curio provider.
+ * @returns The proofset details.
+ */
 export const getProofSet = async (
   proofsetId: number,
   pdpUrl: string
@@ -76,7 +86,6 @@ export const getProofSet = async (
     }
 
     const result = (await response.json()) as any;
-    console.log("result", result);
     return result;
   } catch (error) {
     console.error("Error getting proofset details", error);

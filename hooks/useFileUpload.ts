@@ -6,9 +6,12 @@ import { useConfetti } from "@/hooks/useConfetti";
 import { useAccount } from "wagmi";
 import { useNetwork } from "@/hooks/useNetwork";
 import { preflightCheck } from "@/utils/preflightCheck";
-import { getBestProofset } from "@/utils/getBestProofset";
+import { getProofset } from "@/utils/getProofset";
 
-export function useFileUpload() {
+/**
+ * Hook to upload a file to the Filecoin network using Synapse.
+ */
+export const useFileUpload = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
   const [uploadedInfo, setUploadedInfo] = useState<{
@@ -43,7 +46,7 @@ export function useFileUpload() {
         disableNonceManager: false,
       });
 
-      const { providerId } = await getBestProofset(signer, network, address);
+      const { providerId } = await getProofset(signer, network, address);
 
       const withProofset = !!providerId;
 
@@ -130,4 +133,4 @@ export function useFileUpload() {
     handleReset,
     status,
   };
-}
+};

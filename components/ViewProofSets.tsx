@@ -4,7 +4,7 @@
 import { useAccount } from "wagmi";
 import { useProofsets } from "@/hooks/useProofsets";
 
-export function ViewProofSets() {
+export const ViewProofSets = () => {
   const { isConnected } = useAccount();
 
   const { data, isLoading: isProofsetsLoading } = useProofsets();
@@ -47,4 +47,4 @@ export function ViewProofSets() {
       )}
     </div>
   );
-}
+};

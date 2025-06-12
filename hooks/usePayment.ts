@@ -7,7 +7,7 @@ import { Synapse } from "@filoz/synapse-sdk";
 import { getPandoraAddress, PROOF_SET_CREATION_FEE } from "@/utils";
 import { usePublicClient } from "wagmi";
 
-export function usePayment() {
+export const usePayment = () => {
   const signer = useEthersSigner();
   const [status, setStatus] = useState<string>("");
   const { triggerConfetti } = useConfetti();
@@ -57,4 +57,4 @@ export function usePayment() {
     },
   });
   return { mutation, status };
-}
+};

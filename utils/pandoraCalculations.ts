@@ -1,7 +1,6 @@
-import {
-  PERSISTENCE_PERIOD_IN_DAYS,
-  EPOCHS_PER_DAY,
-} from "./constants";
+import { PandoraService, Synapse } from "@filoz/synapse-sdk";
+import { EPOCHS_PER_DAY, ONE_GB_IN_BYTES } from "@/utils/constants";
+import { config } from "@/config";
 import { formatUnits } from "viem";
 
 /**
@@ -21,6 +20,12 @@ export interface PandoraBalanceData {
 export interface StorageCalculationResult {
   /** The required rate allowance needed for storage */
   rateNeeded: bigint;
+  /** The current rate used */
+  rateUsed: bigint;
+  /** The current storage usage in bytes */
+  currentStorageBytes: bigint;
+  /** The current storage usage in GB */
+  currentStorageGB: number;
   /** The required lockup amount needed for storage persistence */
   lockupNeeded: bigint;
   /** The required lockup amount formatted with 18 decimal places */
@@ -74,12 +79,23 @@ export interface StorageCalculationResult {
  * }
  * ```
  */
-export function calculateStorageMetrics(
-  pandoraBalance: PandoraBalanceData,
-  persistencePeriodDays: bigint = PERSISTENCE_PERIOD_IN_DAYS,
-  epochsPerDay: bigint = EPOCHS_PER_DAY,
-  minDaysThreshold: bigint = 10n
-): StorageCalculationResult {
+export const calculateStorageMetrics = async (
+  synapse: Synapse,
+  persistencePeriodDays: bigint = BigInt(config.persistencePeriod) *
+    EPOCHS_PER_DAY,
+  storageCapacity: number = config.storageCapacity * ONE_GB_IN_BYTES,
+  minDaysThreshold: bigint = BigInt(config.minDaysThreshold)
+): Promise<StorageCalculationResult> => {
+  const pandoraService = new PandoraService(
+    synapse.getProvider(),
+    synapse.getPandoraAddress()
+  );
+  const pandoraBalance = await pandoraService.checkAllowanceForStorage(
+    storageCapacity,
+    false,
+    synapse.payments
+  );
+
   // Calculate the required rate allowance
   // This is the difference between what's needed and what's currently used
   const rateNeeded =
@@ -87,7 +103,7 @@ export function calculateStorageMetrics(
 
   // Calculate the base lockup needed for the persistence period
   // Formula: persistence_days * epochs_per_day * rate_needed
-  let lockupNeeded = persistencePeriodDays * epochsPerDay * rateNeeded;
+  let lockupNeeded = persistencePeriodDays * EPOCHS_PER_DAY * rateNeeded;
 
   // Calculate remaining lockup allowance
   // Use the current allowance if it's greater than or equal to what's used,
@@ -100,12 +116,39 @@ export function calculateStorageMetrics(
   // Calculate how many days of persistence are left with current lockup
   // Avoid division by zero by checking if rateNeeded is greater than 0
   const persistenceDaysLeft =
-    rateNeeded > 0n ? lockupRemaining / epochsPerDay / rateNeeded : 0n;
+    rateNeeded > 0n ? lockupRemaining / EPOCHS_PER_DAY / rateNeeded : 0n;
 
   // If persistence days left is below the minimum threshold,
   // add the remaining lockup to the needed amount for safety
   if (persistenceDaysLeft < minDaysThreshold) {
     lockupNeeded = lockupNeeded + lockupRemaining;
+  }
+
+  // Calculate current storage usage based on the ratio of current rate used
+  // to the rate needed for the known storage capacity
+  let currentStorageBytes = 0n;
+  let currentStorageGB = 0;
+
+  if (
+    pandoraBalance.currentRateUsed > 0n &&
+    pandoraBalance.rateAllowanceNeeded > 0n
+  ) {
+    try {
+      // Calculate the ratio of current usage to what would be needed for the storage capacity
+      // currentRateUsed / rateAllowanceNeeded = actualStorageBytes / storageCapacity
+      // Therefore: actualStorageBytes = (currentRateUsed * storageCapacity) / rateAllowanceNeeded
+      currentStorageBytes =
+        (pandoraBalance.currentRateUsed * BigInt(storageCapacity)) /
+        pandoraBalance.rateAllowanceNeeded;
+
+      // Convert bytes to GB (1 GB = 1024^3 bytes)
+      currentStorageGB = Number(currentStorageBytes) / (1024 * 1024 * 1024);
+    } catch (error) {
+      console.warn("Failed to calculate current storage usage:", error);
+      // Fallback to 0 if calculation fails
+      currentStorageBytes = 0n;
+      currentStorageGB = 0;
+    }
   }
 
   // Check if current rate allowance is sufficient
@@ -119,6 +162,9 @@ export function calculateStorageMetrics(
 
   return {
     rateNeeded,
+    rateUsed: pandoraBalance.currentRateUsed,
+    currentStorageBytes,
+    currentStorageGB,
     lockupNeeded,
     lockupNeededFormatted: formatUnits(lockupNeeded, 18),
     lockupRemaining,
@@ -127,49 +173,4 @@ export function calculateStorageMetrics(
     isLockupSufficient,
     isSufficient,
   };
-}
-
-/**
- * Formats a bigint balance to a human-readable number
- *
- * @param balance - The balance as a bigint
- * @param decimals - Number of decimal places for the token
- * @returns The formatted balance as a number
- *
- * @example
- * ```typescript
- * const filBalance = 1000000000000000000n; // 1 FIL in wei
- * const formatted = formatBalance(filBalance, 18); // Returns 1
- * ```
- */
-export function formatBalance(balance: bigint, decimals: number): number {
-  return Number(balance) / 10 ** decimals;
-}
-
-/**
- * Converts days to epochs based on the epochs per day ratio
- *
- * @param days - Number of days as bigint
- * @param epochsPerDay - Number of epochs per day (default: EPOCHS_PER_DAY)
- * @returns Number of epochs as bigint
- */
-export function daysToEpochs(
-  days: bigint,
-  epochsPerDay: bigint = EPOCHS_PER_DAY
-): bigint {
-  return days * epochsPerDay;
-}
-
-/**
- * Converts epochs to days based on the epochs per day ratio
- *
- * @param epochs - Number of epochs as bigint
- * @param epochsPerDay - Number of epochs per day (default: EPOCHS_PER_DAY)
- * @returns Number of days as bigint
- */
-export function epochsToDays(
-  epochs: bigint,
-  epochsPerDay: bigint = EPOCHS_PER_DAY
-): bigint {
-  return epochs / epochsPerDay;
-}
+};

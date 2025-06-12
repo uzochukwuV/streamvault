@@ -4,9 +4,9 @@
 import { useAccount } from "wagmi";
 import { useBalances } from "@/hooks/useBalances";
 import { usePayment } from "@/hooks/usePayment";
-import { PERSISTENCE_PERIOD_IN_DAYS, NUMBER_OF_GB } from "@/utils";
+import { config } from "@/config";
 
-export function TokenPayment() {
+export const TokenPayment = () => {
   const { isConnected } = useAccount();
 
   const {
@@ -18,21 +18,23 @@ export function TokenPayment() {
   const {
     filBalance,
     usdfcBalance,
-    paymentsBalance,
+    pandoraBalance,
     persistenceDaysLeft,
     isSufficient,
     isRateSufficient,
     isLockupSufficient,
     rateNeeded,
+    storageUsageMessage,
     lockupNeeded,
   } = balances || {
     filBalance: 0,
     usdfcBalance: 0,
-    paymentsBalance: 0,
+    pandoraBalance: 0,
     persistenceDaysLeft: 0,
     isSufficient: false,
     rateNeeded: 0,
     lockupNeeded: 0,
+    storageUsageMessage: "",
   };
 
   const { mutation: paymentMutation, status } = usePayment();
@@ -76,7 +78,7 @@ export function TokenPayment() {
           <span className="font-medium">USDFC in Synapse contract:</span>{" "}
           {isBalanceLoading
             ? "Loading..."
-            : `${paymentsBalance.toLocaleString()} USDFC`}
+            : `${pandoraBalance.toLocaleString()} USDFC`}
         </div>
         <div>
           <span className="font-medium">Days until current rate drained:</span>{" "}
@@ -94,21 +96,26 @@ export function TokenPayment() {
           <span className="font-medium">Is lockup sufficient:</span>{" "}
           {isBalanceLoading ? "Loading..." : isLockupSufficient ? "Yes" : "No"}
         </div>
+        <div>
+          <span className="font-medium">Current storage usage:</span>{" "}
+          {isBalanceLoading ? "Loading..." : storageUsageMessage}
+        </div>
       </div>
       <div
         className={`flex flex-col sm:flex-row gap-2 ${isBalanceLoading ? "hidden" : ""}`}
       >
         {isSufficient && (
           <div>
-            You have enough USDFC to cover the storage costs for {NUMBER_OF_GB}
-            GB for {PERSISTENCE_PERIOD_IN_DAYS} days.
+            You have enough USDFC to cover the storage costs for{" "}
+            {config.storageCapacity}
+            GB for {config.persistencePeriod} days.
           </div>
         )}
         {!isSufficient && (
           <div className="flex justify-between items-center gap-2">
             <div className="text-sm w-1/2">
               You do not have enough USDFC to cover the storage costs for{" "}
-              {NUMBER_OF_GB}GB for {PERSISTENCE_PERIOD_IN_DAYS} days.
+              {config.storageCapacity}GB for {config.persistencePeriod} days.
             </div>
             <button
               onClick={async () => {
@@ -145,4 +152,4 @@ export function TokenPayment() {
       )}
     </div>
   );
-}
+};

@@ -3,7 +3,7 @@ import { JsonRpcSigner } from "ethers";
 
 // Pick the provider that has the most used storage
 // in a proofset with the client
-export const getBestProofset = async (
+export const getProofset = async (
   signer: JsonRpcSigner,
   network: "mainnet" | "calibration",
   address: string
