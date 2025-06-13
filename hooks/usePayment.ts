@@ -52,8 +52,6 @@ export const usePayment = () => {
 
       const hasProofSet = !!proofset;
 
-      console.log("hasProofSet", hasProofSet);
-
       const fee = hasProofSet ? 0n : PROOF_SET_CREATION_FEE;
 
       const amount = depositAmount + fee;
@@ -79,9 +77,7 @@ export const usePayment = () => {
         await transaction.wait();
         setStatus("💰 Successfully approved USDFC to cover storage costs");
       }
-      console.log("amountto deposit", amount);
       if (amount > 0n) {
-        console.log("depositing", amount);
         setStatus("💰 Depositing USDFC to cover storage costs...");
         const transaction = await synapse.payments.deposit(amount);
         await transaction.wait();
@@ -102,6 +98,7 @@ export const usePayment = () => {
       triggerConfetti();
     },
     onError: (error) => {
+      console.error("Payment failed:", error);
       setStatus(
         `❌ ${error.message || "Transaction failed. Please try again."}`
       );

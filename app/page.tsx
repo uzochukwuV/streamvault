@@ -1,5 +1,5 @@
 "use client";
-import { TokenPayment } from "../components/TokenPayment";
+import { StorageManager } from "../components/StorageManager";
 import { useAccount } from "wagmi";
 import { useState } from "react";
 import { FileUploader } from "../components/FileUploader";
@@ -9,7 +9,7 @@ import { useConfetti } from "@/hooks/useConfetti";
 import { ViewProofSets } from "@/components/ViewProofSets";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-type Tab = "deposit" | "upload" | "proof-set";
+type Tab = "manage-storage" | "upload" | "proof-set";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -35,7 +35,7 @@ const itemVariants = {
 
 export default function Home() {
   const { isConnected } = useAccount();
-  const [activeTab, setActiveTab] = useState<Tab>("deposit");
+  const [activeTab, setActiveTab] = useState<Tab>("manage-storage");
   const { showConfetti } = useConfetti();
 
   return (
@@ -107,9 +107,9 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveTab("deposit")}
+                  onClick={() => setActiveTab("manage-storage")}
                   className={`flex-1 py-2 px-4 text-center border-b-2 transition-colors ${
-                    activeTab === "deposit"
+                    activeTab === "manage-storage"
                       ? "border-primary text-primary-foreground bg-primary"
                       : "border-transparent text-secondary hover:text-primary hover:bg-secondary/10"
                   }`}
@@ -143,7 +143,7 @@ export default function Home() {
               </motion.div>
 
               <AnimatePresence mode="wait">
-                {activeTab === "deposit" ? (
+                {activeTab === "manage-storage" ? (
                   <motion.div
                     key="deposit"
                     initial={{ opacity: 0, x: -20 }}
@@ -155,7 +155,7 @@ export default function Home() {
                       damping: 20,
                     }}
                   >
-                    <TokenPayment />
+                    <StorageManager />
                   </motion.div>
                 ) : activeTab === "upload" ? (
                   <motion.div

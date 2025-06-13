@@ -1,4 +1,4 @@
 export * from "./constants";
-export * from "./pandoraCalculations";
+export * from "./calculateStorageMetrics";
 export * from "./getProofset";
 export * from "./preflightCheck";

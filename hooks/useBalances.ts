@@ -2,10 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Synapse, TOKENS } from "@filoz/synapse-sdk";
 import { useEthersProvider } from "@/hooks/useEthers";
 import { useAccount } from "wagmi";
-import { calculateStorageMetrics } from "@/utils/pandoraCalculations";
+import { calculateStorageMetrics } from "@/utils/calculateStorageMetrics";
 import { useNetwork } from "@/hooks/useNetwork";
 import { formatUnits } from "viem";
-import { getPandoraAddress } from "@/utils/constants";
 import { UseBalancesResponse } from "@/types";
 
 /**
@@ -33,12 +32,6 @@ export const useBalances = () => {
       ]);
 
       const usdfcDecimals = synapse.payments.decimals(TOKENS.USDFC);
-
-      const serviceStatus = await synapse.payments.serviceApproval(
-        getPandoraAddress(network)
-      );
-
-      console.log("serviceStatus", serviceStatus);
 
       // Calculate storage metrics
       const storageMetrics = await calculateStorageMetrics(synapse);

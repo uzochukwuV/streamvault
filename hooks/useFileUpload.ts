@@ -74,16 +74,10 @@ export const useFileUpload = () => {
         providerId,
         callbacks: {
           onProofSetResolved: (info) => {
-            console.log("Proof set resolved:", info);
             setStatus("🔗 Existing proof set found and resolved");
             setProgress(30);
           },
           onProofSetCreationStarted: (transactionResponse, statusUrl) => {
-            console.log(
-              "Proof set creation started:",
-              transactionResponse,
-              statusUrl
-            );
             setStatus("🏗️ Creating new proof set on blockchain...");
             setProgress(35);
           },
@@ -101,7 +95,6 @@ export const useFileUpload = () => {
             }
           },
           onProviderSelected: (provider) => {
-            console.log("Provider selected:", provider);
             setStatus(`🏪 Storage provider selected`);
           },
         },
@@ -112,9 +105,8 @@ export const useFileUpload = () => {
       // 8) Upload file to storage provider
       const { commp } = await storageService.upload(uint8ArrayBytes, {
         onUploadComplete: (commp) => {
-          console.log("Upload complete with commp:", commp);
           setStatus(
-            `📊 File uploaded! Signing msg to add roots to the \nproof set`
+            `📊 File uploaded! Signing msg to add roots to the proof set`
           );
           setProgress(80);
         },
@@ -133,7 +125,6 @@ export const useFileUpload = () => {
           setProgress(85);
         },
         onRootConfirmed: (rootIds) => {
-          console.log("Roots added to proof set:", rootIds);
           setStatus("🌳 Data roots added to proof set successfully");
           setProgress(90);
         },
@@ -159,6 +150,7 @@ export const useFileUpload = () => {
       triggerConfetti();
     },
     onError: (error) => {
+      console.error("Upload failed:", error);
       setStatus(`❌ Upload failed: ${error.message || "Please try again"}`);
       setProgress(0);
     },
