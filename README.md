@@ -15,8 +15,8 @@ This dApp showcases:
 - Node.js 18+ and npm
 - A web3 wallet (like MetaMask)
 - Basic understanding of React and TypeScript
-- Some tFIL token on Filecoin Calibration testnet [link to faucet](https://faucet.calibnet.chainsafe-fil.io/funds.html)
-- Some USDFC tokens on Filecoin Calibration testnet [link to faucet](https://forest-explorer.chainsafe.dev/faucet/calibnet_usdfc)
+- Get some tFIL tokens on Filecoin Calibration testnet [link to faucet](https://faucet.calibnet.chainsafe-fil.io/funds.html)
+- Get some USDFC tokens on Filecoin Calibration testnet [link to faucet](https://forest-explorer.chainsafe.dev/faucet/calibnet_usdfc)
 
 ## Getting Started
 

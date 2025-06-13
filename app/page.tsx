@@ -17,7 +17,7 @@ const containerVariants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.05,
-      delayChildren: 0.1,
+      delayChildren: 0.2,
     },
   },
 };
@@ -28,9 +28,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 10,
+      type: "smooth",
     },
   },
 };
@@ -103,7 +101,7 @@ export default function Home() {
             <motion.div
               key="content"
               variants={itemVariants}
-              className="mt-8 max-w-xl w-full"
+              className="mt-8 max-w-3xl w-full border-1 rounded-lg p-8"
             >
               <motion.div variants={itemVariants} className="flex mb-6">
                 <motion.button
@@ -116,7 +114,7 @@ export default function Home() {
                       : "border-transparent text-secondary hover:text-primary hover:bg-secondary/10"
                   }`}
                 >
-                  Deposit USDFC
+                  Manage Storage
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -162,13 +160,12 @@ export default function Home() {
                 ) : activeTab === "upload" ? (
                   <motion.div
                     key="upload"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
+                    // top to bottom
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: +20 }}
                     transition={{
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 20,
+                      type: "smooth",
                     }}
                   >
                     <FileUploader />

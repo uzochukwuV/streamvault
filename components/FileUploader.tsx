@@ -45,9 +45,8 @@ export const FileUploader = () => {
     return null;
   }
 
-  console.log(uploadedInfo);
   return (
-    <div className="w-full max-w-md">
+    <div className="mt-4 p-6">
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
           isDragging
@@ -137,7 +136,7 @@ export const FileUploader = () => {
               ${
                 status.includes("❌")
                   ? "text-red-500"
-                  : status.includes("✅")
+                  : status.includes("✅") || status.includes("🎉")
                     ? "text-green-500"
                     : "text-secondary"
               }
@@ -168,7 +167,7 @@ export const FileUploader = () => {
             </div>
             <div>
               <span className="font-medium">File size:</span>{" "}
-              {uploadedInfo.fileSize.toLocaleString()} bytes
+              {uploadedInfo.fileSize?.toLocaleString() || "N/A"} bytes
             </div>
             <div className="break-all">
               <span className="font-medium">CommP:</span> {uploadedInfo.commp}

@@ -20,11 +20,13 @@ export const getProofset = async (
     bestProofset = proofSets.reduce((max, proofSet) => {
       return proofSet.currentRootCount > max.currentRootCount ? proofSet : max;
     }, proofSets[0]);
-    providerId = await pandoraService.getProviderIdByAddress(
-      bestProofset.payee
-    );
+    if (bestProofset) {
+      providerId = await pandoraService.getProviderIdByAddress(
+        bestProofset.payee
+      );
+    }
   } catch (error) {
     console.error("Error getting providerId", error);
   }
-  return { providerId, bestProofset };
+  return { providerId, proofset: bestProofset };
 };
