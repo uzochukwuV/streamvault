@@ -8,18 +8,20 @@ import { useNetwork } from "@/hooks/useNetwork";
 import { preflightCheck } from "@/utils/preflightCheck";
 import { getProofset } from "@/utils/getProofset";
 
+export type UploadedInfo = {
+  fileName?: string;
+  fileSize?: number;
+  commp?: string;
+  txHash?: string;
+};
+
 /**
  * Hook to upload a file to the Filecoin network using Synapse.
  */
 export const useFileUpload = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
-  const [uploadedInfo, setUploadedInfo] = useState<{
-    fileName: string;
-    fileSize: number;
-    commp: string;
-    txHash: string;
-  } | null>(null);
+  const [uploadedInfo, setUploadedInfo] = useState<UploadedInfo | null>(null);
 
   const signer = useEthersSigner();
   const { triggerConfetti } = useConfetti();
@@ -34,23 +36,27 @@ export const useFileUpload = () => {
       if (!network) throw new Error("Network not found");
       setProgress(0);
       setUploadedInfo(null);
-      setStatus("Preparing upload...");
+      setStatus("🔄 Initializing file upload to Filecoin...");
 
       // 1) Convert File → ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
       // 2) Convert ArrayBuffer → Uint8Array
       const uint8ArrayBytes = new Uint8Array(arrayBuffer);
 
+      // 3) Create Synapse instance
       const synapse = await Synapse.create({
         provider: signer.provider,
         disableNonceManager: false,
       });
 
+      // 4) Get proofset
       const { providerId } = await getProofset(signer, network, address);
-
+      // 5) Check if we have a proofset
       const withProofset = !!providerId;
 
-      // Check if we have enough USDFC to cover the storage costs and deposit if not
+      // 6) Check if we have enough USDFC to cover the storage costs and deposit if not
+      setStatus("💰 Checking USDFC balance and storage allowances...");
+      setProgress(5);
       await preflightCheck(
         file,
         synapse,
@@ -60,63 +66,101 @@ export const useFileUpload = () => {
         setProgress
       );
 
+      setStatus("🔗 Setting up storage service and proof set...");
+      setProgress(25);
+
+      // 7) Create storage service
       const storageService = await synapse.createStorage({
         providerId,
         callbacks: {
           onProofSetResolved: (info) => {
             console.log("Proof set resolved:", info);
+            setStatus("🔗 Existing proof set found and resolved");
+            setProgress(30);
           },
-          onProofSetCreationStarted: (txHash, statusUrl) => {
-            console.log("Proof set creation started:", txHash, statusUrl);
-            setStatus("Proof set creation started");
+          onProofSetCreationStarted: (transactionResponse, statusUrl) => {
+            console.log(
+              "Proof set creation started:",
+              transactionResponse,
+              statusUrl
+            );
+            setStatus("🏗️ Creating new proof set on blockchain...");
             setProgress(35);
           },
           onProofSetCreationProgress: (status) => {
             console.log("Proof set creation progress:", status);
             if (status.transactionSuccess) {
-              setStatus(`Proof set transaction confirmed`);
-              setProgress(40);
+              setStatus(`⛓️ Proof set transaction confirmed on chain`);
+              setProgress(45);
             }
             if (status.serverConfirmed) {
-              setStatus(`Proof set created in: ${status.elapsedMs / 1000}s`);
-              setProgress(40);
+              setStatus(
+                `🎉 Proof set ready! (${Math.round(status.elapsedMs / 1000)}s)`
+              );
+              setProgress(50);
             }
           },
           onProviderSelected: (provider) => {
             console.log("Provider selected:", provider);
+            setStatus(`🏪 Storage provider selected`);
           },
         },
       });
 
-      setStatus("Uploading file...");
-      setProgress(30);
-
+      setStatus("📁 Uploading file to storage provider...");
+      setProgress(55);
+      // 8) Upload file to storage provider
       const { commp } = await storageService.upload(uint8ArrayBytes, {
         onUploadComplete: (commp) => {
           console.log("Upload complete with commp:", commp);
-          setStatus("Upload completed starting adding roots...");
+          setStatus(
+            `📊 File uploaded! Signing msg to add roots to the \nproof set`
+          );
           setProgress(80);
         },
-        onRootAdded: () => {
-          setStatus("Root added");
+        onRootAdded: async (transactionResponse) => {
+          setStatus(
+            `🔄 Waiting for transaction to be confirmed on chain${
+              transactionResponse ? `(txHash: ${transactionResponse.hash})` : ""
+            }`
+          );
+          if (transactionResponse) {
+            setUploadedInfo((prev) => ({
+              ...prev,
+              txHash: transactionResponse?.hash,
+            }));
+          }
+          setProgress(85);
+        },
+        onRootConfirmed: (rootIds) => {
+          console.log("Roots added to proof set:", rootIds);
+          setStatus("🌳 Data roots added to proof set successfully");
+          setProgress(90);
         },
       });
 
-      setProgress(100);
-      setStatus("✅ File uploaded successfully (mock)!");
-      setUploadedInfo({
+      // In case the transaction was not given back by the storage provider, we wait for 50 seconds
+      // So we make sure that the transaction is confirmed on chain
+      if (!uploadedInfo?.txHash) {
+        await new Promise((resolve) => setTimeout(resolve, 50000));
+      }
+
+      setProgress(95);
+      setUploadedInfo((prev) => ({
+        ...prev,
         fileName: file.name,
         fileSize: file.size,
         commp: commp,
-        txHash: "",
-      });
-      triggerConfetti();
+      }));
     },
     onSuccess: () => {
-      setStatus("✅ File uploaded successfully!");
+      setStatus("🎉 File successfully stored on Filecoin!");
+      setProgress(100);
+      triggerConfetti();
     },
     onError: (error) => {
-      setStatus(`❌ ${error.message || "Upload failed. Please try again."}`);
+      setStatus(`❌ Upload failed: ${error.message || "Please try again"}`);
+      setProgress(0);
     },
   });
 

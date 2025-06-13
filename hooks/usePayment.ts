@@ -3,51 +3,102 @@ import { useEthersSigner } from "@/hooks/useEthers";
 import { useState } from "react";
 import { useConfetti } from "@/hooks/useConfetti";
 import { useNetwork } from "@/hooks/useNetwork";
-import { Synapse } from "@filoz/synapse-sdk";
-import { getPandoraAddress, PROOF_SET_CREATION_FEE } from "@/utils";
-import { usePublicClient } from "wagmi";
+import { Synapse, TOKENS, CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
+import {
+  getPandoraAddress,
+  PROOF_SET_CREATION_FEE,
+  MAX_UINT256,
+  getProofset,
+} from "@/utils";
+import { useAccount } from "wagmi";
 
+/**
+ * Hook to handle payment for storage
+ * @param lockup - The lockup amount to be used for the storage
+ * @param epochRate - The epoch rate to be used for the storage
+ * @param depositAmount - The deposit amount to be used for the storage
+ * @notice LockUp is the accoumulated amount of USDFC that the user has locked up for Storing data over time.
+ * It is different from the depositAmount. Which is the amount needed to pay for more storage if required.
+ * @returns Mutation and status
+ */
 export const usePayment = () => {
   const signer = useEthersSigner();
   const [status, setStatus] = useState<string>("");
   const { triggerConfetti } = useConfetti();
   const { data: network } = useNetwork();
-  const publicClient = usePublicClient();
+  const { address } = useAccount();
   const mutation = useMutation({
     mutationFn: async ({
-      amount,
-      epochRate,
+      lockupAllowance,
+      epochRateAllowance,
+      depositAmount,
     }: {
-      amount: bigint;
-      epochRate: bigint;
+      lockupAllowance: bigint;
+      epochRateAllowance: bigint;
+      depositAmount: bigint;
     }) => {
       if (!signer) throw new Error("Signer not found");
       if (!network) throw new Error("Network not found");
-      if (!publicClient) throw new Error("Public client not found");
-      const _amount = amount + PROOF_SET_CREATION_FEE;
+      if (!address) throw new Error("Address not found");
+      const paymentsAddress = CONTRACT_ADDRESSES.PAYMENTS[network];
 
-      setStatus("Preparing transaction...");
+      setStatus("🔄 Preparing transaction...");
       const synapse = await Synapse.create({
         signer,
         disableNonceManager: false,
       });
 
-      setStatus("Approving & depositing USDFC to cover storage costs...");
-      await synapse.payments.deposit(_amount);
-      setStatus("Successfully deposited USDFC to cover storage costs");
+      const { proofset } = await getProofset(signer, network, address);
 
-      setStatus("Approving Pandora service USDFC spending rates...");
-      const txHash = await synapse.payments.approveService(
-        getPandoraAddress(network),
-        epochRate,
-        _amount
+      const hasProofSet = !!proofset;
+
+      console.log("hasProofSet", hasProofSet);
+
+      const fee = hasProofSet ? 0n : PROOF_SET_CREATION_FEE;
+
+      const amount = depositAmount + fee;
+
+      const allowance = await synapse.payments.allowance(
+        TOKENS.USDFC,
+        paymentsAddress
       );
-      setStatus("Successfully approved Pandora spending rates");
-      // 5) Return transaction hash
-      return txHash;
+
+      const balance = await synapse.payments.walletBalance(TOKENS.USDFC);
+
+      if (balance < amount) {
+        throw new Error("Insufficient USDFC balance");
+      }
+
+      if (allowance < MAX_UINT256) {
+        setStatus("💰 Approving USDFC to cover storage costs...");
+        const transaction = await synapse.payments.approve(
+          TOKENS.USDFC,
+          paymentsAddress,
+          MAX_UINT256
+        );
+        await transaction.wait();
+        setStatus("💰 Successfully approved USDFC to cover storage costs");
+      }
+      console.log("amountto deposit", amount);
+      if (amount > 0n) {
+        console.log("depositing", amount);
+        setStatus("💰 Depositing USDFC to cover storage costs...");
+        const transaction = await synapse.payments.deposit(amount);
+        await transaction.wait();
+        setStatus("💰 Successfully deposited USDFC to cover storage costs");
+      }
+
+      setStatus("💰 Approving Pandora service USDFC spending rates...");
+      const transaction = await synapse.payments.approveService(
+        getPandoraAddress(network),
+        epochRateAllowance,
+        lockupAllowance + fee
+      );
+      await transaction.wait();
+      setStatus("💰 Successfully approved Pandora spending rates");
     },
     onSuccess: () => {
-      setStatus("✅ Payment successful!");
+      setStatus("✅ Payment was successful!");
       triggerConfetti();
     },
     onError: (error) => {
