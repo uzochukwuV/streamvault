@@ -41,7 +41,7 @@ export default function Home() {
   const { showConfetti } = useConfetti();
 
   return (
-    <>
+    <div className="w-full flex flex-col justify-center">
       {showConfetti && (
         <Confetti
           recycle={false}
@@ -60,7 +60,7 @@ export default function Home() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex flex-col items-center p-8 mt-16"
+        className="flex flex-col items-center p-8 mt-16 w-full mx-auto"
       >
         <motion.h1
           variants={itemVariants}
@@ -103,7 +103,7 @@ export default function Home() {
             <motion.div
               key="content"
               variants={itemVariants}
-              className="mt-8 w-full max-w-md"
+              className="mt-8 max-w-xl w-full"
             >
               <motion.div variants={itemVariants} className="flex mb-6">
                 <motion.button
@@ -140,7 +140,7 @@ export default function Home() {
                       : "border-transparent text-secondary hover:text-primary hover:bg-secondary/10"
                   }`}
                 >
-                  Proof Set
+                  View Proof Sets
                 </motion.button>
               </motion.div>
 
@@ -195,6 +195,6 @@ export default function Home() {
           )}
         </AnimatePresence>
       </motion.main>
-    </>
+    </div>
   );
 }
