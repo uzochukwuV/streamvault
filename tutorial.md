@@ -1,383 +1,219 @@
-# Building a File Upload dApp using Filecoin Synapse
+# 🚀 Understanding the Filecoin Synapse dApp
 
-[synapse-sdk](https://github.com/FilOzone/synapse-sdk) is a JS/TS SDK for interacting with **Filecoin Synapse** - a smart-contract based marketplace for a collection of services derived from the Filecoin ecosystem, such as Filecoin onchain payment service, hot storage service using PDP, retrieval service, etc.
+This tutorial explains how the **fs-upload-dapp** works—a production-ready Next.js application demonstrating file storage on Filecoin using the **synapse-sdk**. Instead of building from scratch, you'll explore the core workflows and understand how hooks and utilities power the application. 📚
 
-This tutorial will guide you through building a decentralized application that allows users to upload files to Filecoin using USDFC (USD Filecoin) as payment through the Filecoin Synapse.
+[synapse-sdk](https://github.com/FilOzone/synapse-sdk) is a JS/TS SDK for interacting with **Filecoin Synapse** - a smart-contract based marketplace for a collection of services derived from the Filecoin ecosystem, such as Filecoin onchain payment service, hot storage service using PDP, retrieval service, etc. 🛠️
 
-**What You'll Learn**
+## ⚡ Quick Start
 
-By following this tutorial, you'll learn how to:
+1. **Clone and Setup:** 📥
 
-- Set up a modern React dApp with Next.js and TypeScript
-- Integrate Web3 wallet connection using RainbowKit and Wagmi
-- Integrate Synapse SDK into your dApp to access Filecoin Synapse services:
-  - Manage USDFC token deposits and balances
-  - Upload files to Filecoin storage using PDP under the hood
-- Add light/dark mode with a reusable `ThemeProvider`
-- Display fun confetti animations after successful actions
+```sh
+# Clone the repository and start the app
+git clone https://github.com/FIL-Builders/fs-upload-dapp
+cd fs-upload-dapp
+npm install
+npm run dev
+```
 
-## Prerequisites
+2. **Prerequisites:** 📋
 
-- [Node.js](https://nodejs.org/en) 18+ and [npm](https://www.npmjs.com/)
-- A Web3 wallet (like MetaMask) with some test USDFC & tFIL tokens
-- Basic knowledge of React and TypeScript
-- Basic understanding of blockchain concepts
+- [Node.js](https://nodejs.org/en) 18+ and [npm](https://www.npmjs.com/) 📦
+- A Web3 wallet (like MetaMask) with some test USDFC & tFIL tokens 💰
+- Basic knowledge of React and TypeScript 💻
+- Basic understanding of blockchain concepts ⛓️
 
-### Getting Testnet tUSDFC
+3. **Acquire Testnet Tokens:** 🪙
 
-To interact with Synapse and upload files, you'll need testnet USDFC (tUSDFC) tokens on the Filecoin Calibration testnet. There are two ways to mint tUSDFC:
+- **tFIL**: [Filecoin Calibration Faucet](https://faucet.calibnet.chainsafe-fil.io/funds.html) for gas fees. ⛽
+- **tUSDFC**: [ChainSafe USDFC Faucet](https://forest-explorer.chainsafe.dev/faucet/calibnet_usdfc) (limit \$5 per request). 💵
 
-#### Option 1: Mint a Minimum of \$200 tUSDFC
+## 📱 App Overview
 
-* Use the [Secured Finance testnet dApp](https://stg.usdfc.net/) to mint tUSDFC by creating a trove.
-* **Note:** The minting contract currently requires a minimum of \$200 tUSDFC per transaction.
-* For more details, see the [Secured Finance documentation](https://docs.secured.finance/usdfc-stablecoin/getting-started).
-* Make sure your wallet is connected to the Filecoin Calibration testnet.
+The application is organized into four primary workflows, powered by custom hooks and utilities:
 
+- **💰 Balance & Storage Management:** [`useBalances`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useBalances.ts), [`pandoraCalculations`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/pandoraCalculations.ts)
+- **💳 Storage Payments with USDFC:** [`usePayment`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/usePayment.ts)
+- **📤 File Uploads:** [`useFileUpload`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useFileUpload.ts), [`preflightCheck`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/preflightCheck.ts)
+- **🔍 Proof Set Resolution:** [`useProofsets`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useProofsets.ts)
+- **📥 File Downloads:** [`useDownloadRoot`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useDownloadRoot.ts)
 
-#### Option 2: Use the \$1-at-a-time Testnet Faucet
+### 💸 How Payments Work
 
-- [https://forest-explorer.rumcajs.dev/faucet/calibnet_usdfc](https://forest-explorer.rumcajs.dev/faucet/calibnet_usdfc) (by ChainSafe Systems)
-- This faucet allows you to mint **\$1 tUSDFC per request**, which is handy for development or testing with smaller amounts.
-- Enter your Calibration testnet address and click **Mint**. You may be able to repeat the process for additional tUSDFC if needed.
+The Synapse payment system uses two complementary allowances:
 
----
+#### 1. **Rate Allowance** (`rateAllowance`)
 
-**Tip:**
-You'll also need some Calibration tFIL (test FIL) for gas. You can get tFIL from [the Filecoin Calibration Faucet](https://faucet.calibration.fildev.network/).
+- **Definition:** Maximum USDFC the Pandora service can spend per epoch.
+- **Purpose:** Automates payments to storage providers for ongoing storage.
+- **Calculation:** Proportional to your storage needs - higher storage requirements demand higher epoch rates.
 
----
+#### 2. **Lockup Allowance** (`lockupAllowance`)
 
-## Project Setup
+- **Definition:** Total USDFC that Pandora can reserve upfront to guarantee storage provider payments for your target persistence duration.
+- **Purpose:** Secures payment for the entire storage period and enables uninterrupted Proof of Data Possession (PDP) validation.
+- **Calculation:** (Rate allowance × target persistence days) + existing lockup commitments
 
-We've created a [starter project](https://github.com/FIL-Builders/fs-upload-dapp/tree/starter) for you to focus on learning how to use `synapse-sdk`. However, if you want to start from scratch:
+### Storage Configuration
 
-1. Create a new Next.js project with the app router:
-
-   ```bash
-   npx create-next-app@latest fs-upload-app --typescript
-   cd fs-upload-app
-   ```
-
-2. Install required dependencies:
-
-   ```bash
-   npm install wagmi viem @rainbow-me/rainbowkit \
-     @tanstack/react-query framer-motion react-confetti ethers
-   ```
-
-   Most importantly, install `synapse-sdk` from npm:
-
-   ```bash
-   npm install @filoz/synapse-sdk
-   ```
-
-## Implementing the dApp
-
-### 1. Configure Web3 Providers
-
-Let's configure Web3 providers in `app/layout.tsx` (full code is [here](https://github.com/FIL-Builders/fs-upload-dapp/blob/starter/app/layout.tsx)) using Wagmi and RainbowKit, so we can:
-
-- Ensure the web3 Provider context is available throughout the entire app
-- The providers only mount once and persist across page navigations
-- Config networks (Filecoin mainnet and calibration) are available across components
+The [`calculateStorageMetrics`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/calculateStorageMetrics.ts) utility calculates payment requirements based on the [app configuration](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/config.ts):
 
 ```typescript
-"use client";
-import "./globals.css";
-import { WagmiProvider } from "wagmi";
-import { filecoin, filecoinCalibration } from "wagmi/chains";
-import { http, createConfig } from "@wagmi/core";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import "@rainbow-me/rainbowkit/styles.css";
-import { Navbar } from "@/components/ui/Navbar";
-import { ThemeProvider } from "@/providers/ThemeProvider";
-import { ConfettiProvider } from "@/providers/ConfettiProvider";
+export const config = {
+  storageCapacity: 10, // GB, maximum storage capacity
+  persistencePeriod: 30, // days, data persistence duration
+  minDaysThreshold: 10, // days, threshold for low-balance warnings
+};
+```
 
-const queryClient = new QueryClient();
+### ⚙️ Configuration Impact
 
-const config = createConfig({
-  chains: [filecoinCalibration, filecoin],
-  connectors: [],
-  transports: {
-    [filecoin.id]: http(),
-    [filecoinCalibration.id]: http(),
-  },
+- **Higher `storageCapacity`** → Increased rate and lockup allowances. 📈
+- **Longer `persistencePeriod`** → Higher lockup allowance (more epochs to cover). ⏰
+- **Lower `minDaysThreshold`** → Earlier warnings about balance depletion. ⚠️
+
+## 💰 Balance & Storage Management
+
+**Component**: [`StorageManager.tsx`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/components/TokenPayment.tsx)
+
+Allows users to monitor balances and manage subscription payments to maintain persistent storage on Filecoin with Proof of Data Possession (PDP).
+
+<img src="public/ManageStorage.png" width="800" alt="Manage Storage Preview" />
+
+### How it Works
+
+The component relies on two main hooks:
+
+The [`useBalances`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useBalances.ts) hook provides real-time visibility into:
+
+- **Wallet Balances**: FIL and USDFC in your wallet
+- **Synapse Contract Balance**: USDFC deposited in Synapse for storage payments
+- **Storage Usage**: Current data stored vs. configured capacity
+- **Persistence**: Days remaining before payment rates are exhausted
+
+Fetching balances and storage metrics via:
+
+```typescript
+const { data, isLoading, isError, error } = useBalances();
+const {
+  filBalance,
+  usdfcBalance,
+  pandoraBalance,
+  persistenceDaysLeft,
+  storageUsageMessage,
+  isSufficient,
+  rateNeeded,
+  lockUpNeeded,
+} = data;
+```
+
+The [`usePayment`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/usePayment.ts) hook handles payments with inputs being calculated by the `useBalances` hook:
+
+1. **Approve & Deposit USDFC** to Synapse payment contract for storage escrow
+2. **Approve Pandora Service** to spend USDFC at specified rates for automated payments per epoch
+
+Payment handling via:
+
+```typescript
+const { mutation: paymentMutation, status } = usePayment();
+const { mutateAsync: handlePayment } = paymentMutation;
+
+await handlePayment({
+  lockupAllowance: BigInt(lockUpNeeded),
+  epochRateAllowance: BigInt(rateNeeded),
+  depositAmount: BigInt(depositAmountNeeded),
 });
-
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>
-        <ThemeProvider>
-          <ConfettiProvider>
-            <QueryClientProvider client={queryClient}>
-              <WagmiProvider config={config}>
-                <RainbowKitProvider
-                  modalSize="compact"
-                  initialChain={filecoinCalibration.id}
-                >
-                  <Navbar />
-                  {children}
-                </RainbowKitProvider>
-              </WagmiProvider>
-            </QueryClientProvider>
-          </ConfettiProvider>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
-}
 ```
 
-### 2. Create Wallet Connection Component
+## 📤 File Uploads with Synapse SDK
 
-RainbowKit provides a pre-built `ConnectButton` component that handles all these features with a polished UI, saving us development time and ensuring a consistent user experience.
+**Component**: [`FileUploader.tsx`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/components/FileUploader.tsx)
 
-Let's create a Wallet Connection Component using `rainbowkit` so the dApp will allow users to:
+The FileUploader component streamlines file uploads using the Synapse SDK.
 
-- Connect their Web3 wallet (MetaMask, etc.) to the application
-- Switch between different Filecoin networks (mainnet/calibration)
-- View their connected account address and balance
-- Sign any transactions interacting with the Synapse service
+<img src="public/UploadFile.png" width="800" alt="Uploader preview" />
 
-Create `components/ConnectWallet.tsx`:
+### How it Works
+
+The [`useFileUpload`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useFileUpload.ts) hook orchestrates the full process to upload a file using synapse sdk.
+
+1. **Preflight Check**: Ensures sufficient USDFC balance via [`preflightCheck`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/preflightCheck.ts)
+2. **Proof Set Resolution**: Finds the proofset to upload the file [`getProofset`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/getProofset.ts)
+3. **File Upload**: Uploads to Filecoin with PDP (Proof of Data Possession) by interacting with the StorageProvider that handles the proofset.
+
+Uploading a file via:
 
 ```typescript
-'use client';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+const { uploadFileMutation, progress, status, uploadedInfo } = useFileUpload();
+const { mutateAsync: uploadFile } = uploadFileMutation;
 
-export function ConnectWallet() {
-  return (
-    <div className="flex justify-center">
-      <ConnectButton />
-    </div>
-  );
-}
+// Upload with progress tracking
+await uploadFile(selectedFile);
 ```
 
-### 3. Implement USDFC Payment Component
+## 🔍 Proof Set Management & Inspection
 
-Before users can upload files through Filecoin Synapse, they need to deposit [USDFC](https://docs.secured.finance/usdfc-stablecoin/getting-started/getting-test-usdfc-on-testnet) (USD Filecoin) tokens into the Synapse payment contract. Here's why:
+**Component**: [`ViewProofSets.tsx`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/components/ViewProofSets.tsx)
 
-- USDFC is the stablecoin used for payments in Filecoin Synapse
-- Users deposit USDFC to the Synapse payment contract, which:
-  - Acts as an escrow for Synapse storage services
-  - Automatically handles payments to storage providers
-  - Ensures fair service delivery through PDP (Proof of Data Possession)
+### Proofset Viewer
 
-Let's create a component that allows users to:
+The ViewProofSets component provides a dashboard to monitor proof sets and manage file downloads.
 
-- Check their USDFC balance in Synapse
-- Deposit USDFC tokens to the Synapse contract
+<img src="public/ProofSetsViewer.png" width="800" alt="ProofsetsViewer preview" />
 
-Create `components/TokenPayment.tsx`, you can copy the full code from [here](https://github.com/FIL-Builders/fs-upload-dapp/blob/starter/components/TokenPayment.tsx).
+### How it Works
 
-The code already has the basic structure ready, We will need to:
+The [`useProofsets`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useProofsets.ts) hook provides visibility into:
 
-1. Import synapse from synapse-sdk
-   ```TypeScript
-   import { Synapse } from '@filecoin-project/synapse-sdk';
-   ```
-2. Implement the USDFC balance
-   ```TypeScript
-   const synapse = new Synapse(provider);
-   const balance = await synapse.getBalance(address);
-   ```
-3. Deposit USDFC to the synapse payment contract
-   ```TypeScript
-   const synapse = new Synapse(signer);
-   await synapse.deposit(amount);
-   ```
+- **Client Proof Sets**: All proof sets associated with your address
+- **Provider Details**: Information about storage providers
+- **Proof Set Status**: Current state and details from provider APIs
 
-### 4. Create File Upload Component
-
-Now that we have wallet connection and USDFC payment set up, we can implement the core functionality - uploading files to Filecoin through Synapse. The Synapse SDK provides a simple interface to:
-
-- Interact with PDP contracts to create a proofset for PDP (Proof of Data Possession) storage
-- Upload files to Filecoin storage with PDP proofset and SP
-- Pay for storage using the previously deposited USDFC
-
-Let's create a component that will:
-
-- Allow users to select or drag-and-drop files
-- Upload files to Filecoin through Synapse
-- Show upload progress and status
-- Handle any errors during the process
-
-Create `components/FileUploader.tsx`, you can copy the full code from [here](https://github.com/FIL-Builders/fs-upload-dapp/blob/starter/components/FileUploader.tsx).
-
-The code already has the basic structure ready, we will need to:
-
-1. Import and initialize Synapse SDK
-   ```TypeScript
-   import { Synapse } from '@filecoin-project/synapse-sdk';
-   ```
-2. Upload file using Synapse SDK
-   This step involves initializing Synapse with web3 wallet as signer, creating Storage to associate with PDP proofset
-
-   ```TypeScript
-   //1. initializing Synapse and upload file
-   const synapse = new Synapse(signer);
-   const fsStorage = await synapse.createStorage();
-   const uploadTask = fsStorage.upload(file);
-
-   // Track upload progress
-   const commp = await uploadTask.commp();
-   setStatus(`Generated CommP: ${commp}`);
-   setProgress(1);
-
-   const sp = await uploadTask.store();
-   setStatus(`Stored data with provider: ${sp}`);
-   setProgress(2);
-
-   const txHash = await uploadTask.done()
-   setStatus('✅ File uploaded successfully to Filecoin in tx ' + txHash);
-   setProgress(3);
-   ```
-
-The Synapse SDK will handle the complex parts under the hood:
-
-- Request existing proofset or create a new proofset with PDP contracts
-- Creating a storage request with PDP storage providers
-- Managing payment from your USDFC balance
-- Verifying successful storage through PDP
-
-### 5. Create a Proof Set Viewer
-
-The latest version of the dApp includes a tab for viewing your PDP proof sets.
-We'll create a component that lists proof sets returned from the Pandora
-service:
+Getting proofsets via:
 
 ```typescript
-"use client";
-import { useAccount } from "wagmi";
-import { useProofsets } from "@/hooks/useProofsets";
+const { data, isLoading: isLoadingProofsets } = useProofsets();
 
-export function ViewProofSets() {
-  const { isConnected } = useAccount();
-  const { data, isLoading } = useProofsets();
+const { proofsets } = data;
 
-  if (!isConnected) return null;
+const proofsetCIDs = Record<string, string[]>();
 
-  return (
-    <div className="mt-4 p-4 border rounded-lg">
-      {isLoading ? (
-        <p>Loading...</p>
-      ) : data && data.proofsets?.length ? (
-        data.proofsets.map((p) => (
-          <pre key={p.railId} className="text-sm overflow-auto">
-            {JSON.stringify(p, null, 2)}
-          </pre>
-        ))
-      ) : (
-        <p>No proof sets found</p>
-      )}
-    </div>
-  );
-}
+proofsets.forEach((proofset) => {
+  if (proofset.details?.roots) {
+    proofsetCIDs[proofset.railId] = proofset.details.roots.map(
+      (root) => root.rootCid
+    );
+  }
+});
 ```
 
-### 6. Put It All Together
+---
 
-Now we'll combine all our components into a cohesive dApp. The flow of our application will be:
+The [`useDownloadRoot`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useDownloadRoot.ts) hook enables file downloads from storage providers using the file's root CID and filename. The filename helps determine the correct MIME type for proper browser handling.
 
-1. User connects their wallet (using `ConnectWallet`)
-2. User deposits USDFC to Synapse (using `TokenPayment`)
-3. User uploads files to Filecoin (using `FileUploader`)
-4. User can inspect existing proof sets (using `ViewProofSets`)
+Downloading a file via:
 
-Let's update `app/page.tsx` to orchestrate these components, you can copy the full code from [here](https://github.com/FIL-Builders/fs-upload-dapp/blob/starter/app/page.tsx):
+```typescript
+const { downloadMutation } = useDownloadRoot(rootCID, filename);
+const { mutateAsync: downloadFile } = downloadMutation;
 
-1. Import our components
-   ```TypeScript
-   import { ConnectWallet } from "../components/ConnectWallet";
-   import { TokenPayment } from "../components/TokenPayment";
-   import { FileUploader } from "../components/FileUploader";
-   import { ViewProofSets } from "../components/ViewProofSets";
-   import { motion, AnimatePresence } from "framer-motion";
-   ```
-2. Create the main page layout with animated tabs and confetti
-   ```TypeScript
-   export default function Home() {
-     const { isConnected } = useAccount();
-     const [activeTab, setActiveTab] = useState<"deposit" | "upload" | "proof-set">("deposit");
-     const { showConfetti } = useConfetti();
+// Download file
+await downloadFile();
+```
 
-     return (
-       <>
-         {showConfetti && <Confetti recycle={false} numberOfPieces={200} gravity={0.2} />}
-         <motion.main className="flex flex-col items-center p-8 mt-16" initial="hidden" animate="visible">
-           <motion.h1 className="text-4xl font-bold mb-8 text-center" variants={itemVariants}>
-             Demo dApp Powered by synapse-sdk
-           </motion.h1>
-           <AnimatePresence mode="wait">
-             {!isConnected ? (
-               <ConnectWallet />
-             ) : (
-               <motion.div className="mt-8 w-full max-w-md" variants={itemVariants}>
-                 <div className="flex mb-6">
-                   <button onClick={() => setActiveTab("deposit")}>Deposit USDFC</button>
-                   <button onClick={() => setActiveTab("upload")}>Upload File</button>
-                   <button onClick={() => setActiveTab("proof-set")}>Proof Set</button>
-                 </div>
-                 <AnimatePresence mode="wait">
-                   {activeTab === "deposit" ? (
-                     <TokenPayment />
-                   ) : activeTab === "upload" ? (
-                     <FileUploader />
-                   ) : (
-                     <ViewProofSets />
-                   )}
-                 </AnimatePresence>
-               </motion.div>
-             )}
-           </AnimatePresence>
-         </motion.main>
-       </>
-     );
-   }
-   ```
+## 🚀 Next Steps
 
-Now we have implemented all the components, and you can also check the [finish branch](https://github.com/FIL-Builders/fs-upload-dapp/tree/finish) with all features implemented. Let's start the dApp by running `npm run dev` and open [http://localhost:3000](http://localhost:3000) to view the dApp.
+- **📊 Monitor Storage**: Use the proof set viewer to track your stored data
+- **💡 Optimize Costs**: Adjust persistence periods based on usage patterns
+- **📈 Scale Up**: Increase storage capacity and deposit additional USDFC as your data usage grows
+- **🔧 Integrate**: Use the patterns to build your own decentralized powered storage applications
 
-<img width="500" alt="image" src="https://github.com/user-attachments/assets/626d0f37-9861-45e8-ac03-de3ac1752224" />
+## 📚 Resources
 
-## How It Works
-
-1. **Wallet Connection**:
-
-   - Users connect their wallet using RainbowKit
-   - The app checks for Filecoin network compatibility
-
-2. **USDFC Deposits**:
-
-   - Users can view their Synapse balance
-   - Deposit USDFC to their Synapse account
-   - Funds are used for storage payments
-
-3. **File Upload**:
-   - Users select a file to upload
-   - The file is uploaded to Filecoin through Synapse
-   - Storage is paid for with deposited USDFC
-4. **Proof Sets**:
-   - Users can view proof sets created for their uploads
-   - Details come directly from the Pandora service
-
-The app also supports a light/dark theme toggle and shows confetti animations on
-successful payments and uploads.
-
-## Next Steps
-
-- Add file metadata handling
-- Monitor storage deal status
-- Add error handling and retries
-- Add file retrieval functionality with CDN option
-
-## Resources
-
-- [Synapse SDK](https://github.com/FilOzone/synapse-sdk)
-- [USDFC Token Contract](https://docs.filecoin.io/smart-contracts/filecoin-evm/reference/erc20-reference/)
-- [Filecoin Network Documentation](https://docs.filecoin.io)
-- [RainbowKit Documentation](https://www.rainbowkit.com)
+- **Live Demo**: [fs-upload-dapp.netlify.app](https://fs-upload-dapp.netlify.app/)
+- **Source Code**: [GitHub Repository](https://github.com/FIL-Builders/fs-upload-dapp)
+- **Synapse SDK**: [NPM Package](https://www.npmjs.com/package/@filoz/synapse-sdk)
+- **PDP**: [PDP Docs](https://github.com/FilOzone/pdp/blob/main/docs/design.md)
+- **Payments contract**: [Payments Contracts](https://github.com/FilOzone/filecoin-services-payments/blob/main/README.md)
+- **Pandora**: [Pandora Contracts](https://github.com/FilOzone/filecoin-services/blob/main/README.md)
+- **USDFC Documentation**: [Secured Finance](https://docs.secured.finance/usdfc-stablecoin/getting-started)
