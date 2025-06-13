@@ -49,7 +49,7 @@ export interface UseBalancesResponse {
   isLockupSufficient: boolean;
   rateNeeded: bigint;
   totalLockupNeeded: bigint;
-  additionalLockupNeeded: bigint;
+  depositNeeded: bigint;
   currentRateAllowanceGB: number;
   currentStorageGB: number;
   currentLockupAllowance: bigint;
@@ -81,7 +81,7 @@ export interface StorageCalculationResult {
   /** The required lockup amount needed for storage persistence */
   totalLockupNeeded: bigint;
   /** The additional lockup amount needed for storage persistence */
-  additionalLockupNeeded: bigint;
+  depositNeeded: bigint;
   /** Number of days left before lockup expires */
   persistenceDaysLeft: number;
   /** Number of days left before lockup expires at current rate */
@@ -96,4 +96,33 @@ export interface StorageCalculationResult {
   currentRateAllowanceGB: number;
   /** The current lockup allowance in USDFC */
   currentLockupAllowance: bigint;
+}
+
+export interface PaymentActionProps extends SectionProps {
+  totalLockupNeeded?: bigint;
+  currentLockupAllowance?: bigint;
+  rateNeeded?: bigint;
+  depositNeeded?: bigint;
+  isProcessingPayment: boolean;
+  onPayment: (params: {
+    lockupAllowance: bigint;
+    epochRateAllowance: bigint;
+    depositAmount: bigint;
+  }) => Promise<void>;
+  handleRefetchBalances: () => Promise<void>;
+}
+
+export interface StatusMessageProps {
+  status?: string;
+}
+
+export interface SectionProps {
+  balances?: UseBalancesResponse;
+  isLoading?: boolean;
+}
+
+export interface AllowanceItemProps {
+  label: string;
+  isSufficient?: boolean;
+  isLoading?: boolean;
 }

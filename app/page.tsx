@@ -58,17 +58,17 @@ export default function Home() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex flex-col items-center p-8 mt-16 w-full mx-auto"
+        className="flex flex-col items-center p-5 mt-5 w-full mx-auto"
       >
         <motion.h1
           variants={itemVariants}
-          className="text-4xl font-bold mb-8 text-center text-foreground"
+          className="text-4xl font-bold mb-3 text-center text-foreground"
         >
           Demo dApp Powered by synapse-sdk
         </motion.h1>
         <motion.p
           variants={itemVariants}
-          className="text-xl font-bold mb-8 text-center text-foreground"
+          className="text-xl font-bold mb-3 text-center text-foreground"
         >
           Upload files to Filecoin using PDP
         </motion.p>
@@ -93,7 +93,7 @@ export default function Home() {
               >
                 <ConnectButton />
               </motion.div>
-              <motion.p variants={itemVariants} className="mt-8 text-secondary">
+              <motion.p variants={itemVariants} className="mt-3 text-secondary">
                 Please connect your wallet to upload dApp
               </motion.p>
             </motion.div>
@@ -101,7 +101,7 @@ export default function Home() {
             <motion.div
               key="content"
               variants={itemVariants}
-              className="mt-8 max-w-3xl w-full border-1 rounded-lg p-8"
+              className="mt-3 max-w-5xl w-full border-1 rounded-lg p-8"
             >
               <motion.div variants={itemVariants} className="flex mb-6">
                 <motion.button

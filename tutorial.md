@@ -32,7 +32,7 @@ npm run dev
 
 The application is organized into four primary workflows, powered by custom hooks and utilities:
 
-- **💰 Balance & Storage Management:** [`useBalances`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useBalances.ts), [`pandoraCalculations`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/pandoraCalculations.ts)
+- **💰 Balance & Storage Management:** [`useBalances`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useBalances.ts), [`calculateStorageMetrics`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/calculateStorageMetrics.ts)
 - **💳 Storage Payments with USDFC:** [`usePayment`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/usePayment.ts)
 - **📤 File Uploads:** [`useFileUpload`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useFileUpload.ts), [`preflightCheck`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/preflightCheck.ts)
 - **🔍 Proof Set Resolution:** [`useProofsets`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useProofsets.ts)
@@ -74,11 +74,11 @@ export const config = {
 
 ## 💰 Balance & Storage Management
 
-**Component**: [`StorageManager.tsx`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/components/TokenPayment.tsx)
+**Component**: [`StorageManager.tsx`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/components/StorageManager.tsx)
 
 Allows users to monitor balances and manage subscription payments to maintain persistent storage on Filecoin with Proof of Data Possession (PDP).
 
-<img src="public/ManageStorage.png" width="800" alt="Manage Storage Preview" />
+<img src="public/manage-storage.gif" width="800" alt="Manage Storage Preview" />
 
 ### How it Works
 
@@ -100,10 +100,10 @@ const {
   usdfcBalance,
   pandoraBalance,
   persistenceDaysLeft,
-  storageUsageMessage,
   isSufficient,
   rateNeeded,
   lockUpNeeded,
+  depositNeeded,
 } = data;
 ```
 
@@ -121,7 +121,7 @@ const { mutateAsync: handlePayment } = paymentMutation;
 await handlePayment({
   lockupAllowance: BigInt(lockUpNeeded),
   epochRateAllowance: BigInt(rateNeeded),
-  depositAmount: BigInt(depositAmountNeeded),
+  depositAmount: BigInt(depositNeeded),
 });
 ```
 
@@ -131,15 +131,25 @@ await handlePayment({
 
 The FileUploader component streamlines file uploads using the Synapse SDK.
 
-<img src="public/UploadFile.png" width="800" alt="Uploader preview" />
+<img src="public/file-upload.gif" width="800" alt="Uploader preview" />
 
 ### How it Works
 
 The [`useFileUpload`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useFileUpload.ts) hook orchestrates the full process to upload a file using synapse sdk.
 
 1. **Preflight Check**: Ensures sufficient USDFC balance via [`preflightCheck`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/preflightCheck.ts)
-2. **Proof Set Resolution**: Finds the proofset to upload the file [`getProofset`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/getProofset.ts)
-3. **File Upload**: Uploads to Filecoin with PDP (Proof of Data Possession) by interacting with the StorageProvider that handles the proofset.
+
+   - 💰 **Insufficient Balance**: Prompts user to deposit more USDFC if current balance is inadequate
+   - ✅ **Balance Verified**: Proceeds to next step when sufficient funds are available
+
+2. **Proof Set Resolution**: Finds or creates the proofset for file upload via [`getProofset`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/getProofset.ts)
+
+   - 🔍 **Existing Proofset**: Uses the current active proofset if one exists
+   - ⚡ **New Proofset**: Creates a new proofset if none exists for the user
+
+3. **File Upload**: Uploads to Filecoin with PDP (Proof of Data Possession) by interacting with the storage provider that handles the proofset
+   - 📤 **File Transfer**: Securely uploads file data to the designated storage provider
+   - 🔐 **Root Registration**: Signs and sends an `addroot` request to the storage provider, enabling them to submit the file root to the proofset for PDP verification
 
 Uploading a file via:
 
@@ -159,7 +169,7 @@ await uploadFile(selectedFile);
 
 The ViewProofSets component provides a dashboard to monitor proof sets and manage file downloads.
 
-<img src="public/ProofSetsViewer.png" width="800" alt="ProofsetsViewer preview" />
+<img src="public/view-proofsets.png" width="800" alt="ProofsetsViewer preview" />
 
 ### How it Works
 

@@ -6,38 +6,11 @@ import { useBalances } from "@/hooks/useBalances";
 import { usePayment } from "@/hooks/usePayment";
 import { config } from "@/config";
 import { formatUnits } from "viem";
-import { UseBalancesResponse } from "@/types";
-
-interface RateIncreaseActionProps {
-  currentLockupAllowance?: bigint;
-  rateNeeded?: bigint;
-  isProcessingPayment: boolean;
-  onPayment: (params: {
-    lockupAllowance: bigint;
-    epochRateAllowance: bigint;
-    depositAmount: bigint;
-  }) => Promise<void>;
-  onRefetch: () => Promise<void>;
-}
-
-interface StatusMessageProps {
-  status?: string;
-}
-
-interface SectionProps {
-  balances?: UseBalancesResponse;
-  isLoading: boolean;
-}
-
-interface ActionSectionProps extends SectionProps {
-  isProcessingPayment: boolean;
-  onPayment: (params: {
-    lockupAllowance: bigint;
-    epochRateAllowance: bigint;
-    depositAmount: bigint;
-  }) => Promise<void>;
-  onRefetch: () => Promise<void>;
-}
+import {
+  AllowanceItemProps,
+  PaymentActionProps,
+  SectionProps,
+} from "@/types";
 
 /**
  * Component to display and manage token payments for storage
@@ -53,7 +26,7 @@ export const StorageManager = () => {
   const { mutateAsync: handlePayment, isPending: isProcessingPayment } =
     paymentMutation;
 
-  const handleRefetch = async () => {
+  const handleRefetchBalances = async () => {
     await refetchBalances();
   };
 
@@ -82,9 +55,19 @@ export const StorageManager = () => {
           isLoading={isBalanceLoading}
           isProcessingPayment={isProcessingPayment}
           onPayment={handlePayment}
-          onRefetch={handleRefetch}
+          handleRefetchBalances={handleRefetchBalances}
         />
-        <StatusMessage status={status} />
+        <div
+          className={`mt-4 p-3 rounded-lg ${status ? "block" : "hidden"} ${
+            status.includes("❌")
+              ? "bg-red-50 border border-red-200 text-red-800"
+              : status.includes("✅")
+                ? "bg-green-50 border border-green-200 text-green-800"
+                : "bg-blue-50 border border-blue-200 text-blue-800"
+          }`}
+        >
+          {status}
+        </div>
       </div>
     </div>
   );
@@ -94,8 +77,8 @@ export const StorageManager = () => {
  * Section displaying allowance status
  */
 const AllowanceStatusSection = ({ balances, isLoading }: SectionProps) => {
-  const additionalLockupNeededFormatted = Number(
-    formatUnits(balances?.additionalLockupNeeded ?? 0n, 18)
+  const depositNeededFormatted = Number(
+    formatUnits(balances?.depositNeeded ?? 0n, 18)
   ).toFixed(3);
 
   return (
@@ -138,7 +121,7 @@ const AllowanceStatusSection = ({ balances, isLoading }: SectionProps) => {
             <p className="text-sm text-yellow-700 mt-2">
               You are currently using{" "}
               {balances?.currentStorageGB?.toLocaleString()} GB. Please deposit{" "}
-              {additionalLockupNeededFormatted} USDFC to extend your lockup for{" "}
+              {depositNeededFormatted} USDFC to extend your lockup for{" "}
               {(
                 config.persistencePeriod - (balances?.persistenceDaysLeft ?? 0)
               ).toFixed(1)}{" "}
@@ -159,8 +142,8 @@ const ActionSection = ({
   isLoading,
   isProcessingPayment,
   onPayment,
-  onRefetch,
-}: ActionSectionProps) => {
+  handleRefetchBalances,
+}: PaymentActionProps) => {
   if (isLoading || !balances) return null;
 
   if (balances.isSufficient) {
@@ -174,21 +157,20 @@ const ActionSection = ({
     );
   }
 
-  const additionalLockupNeededFormatted = Number(
-    formatUnits(balances?.additionalLockupNeeded ?? 0n, 18)
+  const depositNeededFormatted = Number(
+    formatUnits(balances?.depositNeeded ?? 0n, 18)
   ).toFixed(3);
 
   return (
     <div className="space-y-4">
       {balances.isRateSufficient && !balances.isLockupSufficient && (
         <LockupIncreaseAction
-          additionalLockupNeededFormatted={additionalLockupNeededFormatted}
           totalLockupNeeded={balances.totalLockupNeeded}
-          additionalLockNeeded={balances.additionalLockupNeeded}
+          depositNeeded={balances.depositNeeded}
           rateNeeded={balances.rateNeeded}
           isProcessingPayment={isProcessingPayment}
           onPayment={onPayment}
-          onRefetch={onRefetch}
+          handleRefetchBalances={handleRefetchBalances}
         />
       )}
       {!balances.isRateSufficient && balances.isLockupSufficient && (
@@ -197,24 +179,24 @@ const ActionSection = ({
           rateNeeded={balances.rateNeeded}
           isProcessingPayment={isProcessingPayment}
           onPayment={onPayment}
-          onRefetch={onRefetch}
+          handleRefetchBalances={handleRefetchBalances}
         />
       )}
       {!balances.isRateSufficient && !balances.isLockupSufficient && (
         <div className="p-4 bg-red-50 rounded-lg border border-red-200 flex flex-col gap-2">
           <p className="text-red-800">
             ⚠️ Your storage balance is insufficient. You need to deposit{" "}
-            {additionalLockupNeededFormatted} USDFC & Increase your rate
-            allowance to meet your storage needs.
+            {depositNeededFormatted} USDFC & Increase your rate allowance to
+            meet your storage needs.
           </p>
           <button
             onClick={async () => {
               await onPayment({
                 lockupAllowance: balances.totalLockupNeeded,
                 epochRateAllowance: balances.rateNeeded,
-                depositAmount: balances.additionalLockupNeeded,
+                depositAmount: balances.depositNeeded,
               });
-              await onRefetch();
+              await handleRefetchBalances();
             }}
             disabled={isProcessingPayment}
             className={`w-full px-6 py-3 rounded-lg border-2 border-black transition-all ${
@@ -233,32 +215,22 @@ const ActionSection = ({
   );
 };
 
-interface LockupIncreaseActionProps {
-  additionalLockupNeededFormatted?: string;
-  totalLockupNeeded?: bigint;
-  additionalLockNeeded?: bigint;
-  rateNeeded?: bigint;
-  isProcessingPayment: boolean;
-  onPayment: (params: {
-    lockupAllowance: bigint;
-    epochRateAllowance: bigint;
-    depositAmount: bigint;
-  }) => Promise<void>;
-  onRefetch: () => Promise<void>;
-}
 /**
  * Component for handling lockup deposit action
  */
 const LockupIncreaseAction = ({
-  additionalLockupNeededFormatted,
   totalLockupNeeded,
-  additionalLockNeeded,
+  depositNeeded,
   rateNeeded,
   isProcessingPayment,
   onPayment,
-  onRefetch,
-}: LockupIncreaseActionProps) => {
-  if (!totalLockupNeeded || !additionalLockNeeded || !rateNeeded) return null;
+  handleRefetchBalances,
+}: PaymentActionProps) => {
+  if (!totalLockupNeeded || !depositNeeded || !rateNeeded) return null;
+
+  const depositNeededFormatted = Number(
+    formatUnits(depositNeeded ?? 0n, 18)
+  ).toFixed(3);
 
   return (
     <>
@@ -267,7 +239,7 @@ const LockupIncreaseAction = ({
           ⚠️ Additional USDFC needed to meet your storage needs.
         </p>
         <p className="text-sm text-yellow-700 mt-2">
-          Deposit {additionalLockupNeededFormatted} USDFC to extend storage.
+          Deposit {depositNeededFormatted} USDFC to extend storage.
         </p>
       </div>
       <button
@@ -275,9 +247,9 @@ const LockupIncreaseAction = ({
           await onPayment({
             lockupAllowance: totalLockupNeeded,
             epochRateAllowance: rateNeeded,
-            depositAmount: additionalLockNeeded,
+            depositAmount: depositNeeded,
           });
-          await onRefetch();
+          await handleRefetchBalances();
         }}
         disabled={isProcessingPayment}
         className={`w-full px-6 py-3 rounded-lg border-2 border-black transition-all ${
@@ -302,8 +274,8 @@ const RateIncreaseAction = ({
   rateNeeded,
   isProcessingPayment,
   onPayment,
-  onRefetch,
-}: RateIncreaseActionProps) => {
+  handleRefetchBalances,
+}: PaymentActionProps) => {
   if (!currentLockupAllowance || !rateNeeded) return null;
 
   return (
@@ -320,7 +292,7 @@ const RateIncreaseAction = ({
             epochRateAllowance: rateNeeded,
             depositAmount: 0n,
           });
-          await onRefetch();
+          await handleRefetchBalances();
         }}
         disabled={isProcessingPayment}
         className={`w-full px-6 py-3 rounded-lg border-2 border-black transition-all ${
@@ -443,12 +415,6 @@ const StorageStatusSection = ({ balances, isLoading }: SectionProps) => (
     </div>
   </div>
 );
-
-interface AllowanceItemProps {
-  label: string;
-  isSufficient?: boolean;
-  isLoading: boolean;
-}
 /**
  * Component for displaying an allowance status
  */
@@ -466,24 +432,3 @@ const AllowanceItem = ({
     </span>
   </div>
 );
-
-/**
- * Component for displaying status messages
- */
-const StatusMessage = ({ status }: StatusMessageProps) => {
-  if (!status) return null;
-
-  return (
-    <div
-      className={`mt-4 p-3 rounded-lg ${
-        status.includes("❌")
-          ? "bg-red-50 border border-red-200 text-red-800"
-          : status.includes("✅")
-            ? "bg-green-50 border border-green-200 text-green-800"
-            : "bg-blue-50 border border-blue-200 text-blue-800"
-      }`}
-    >
-      {status}
-    </div>
-  );
-};

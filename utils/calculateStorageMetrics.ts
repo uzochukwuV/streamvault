@@ -85,8 +85,7 @@ export const calculateStorageMetrics = async (
   const currentRateAllowanceGB = calculateRateAllowanceGB(
     pandoraBalance.currentRateAllowance
   );
-  const additionalLockupNeeded =
-    lockupNeeded - pandoraBalance.currentLockupAllowance;
+  const depositNeeded = lockupNeeded - pandoraBalance.currentLockupAllowance;
 
   return {
     rateNeeded,
@@ -94,7 +93,7 @@ export const calculateStorageMetrics = async (
     currentStorageBytes,
     currentStorageGB,
     totalLockupNeeded: lockupNeeded,
-    additionalLockupNeeded,
+    depositNeeded,
     persistenceDaysLeft,
     persistenceDaysLeftAtCurrentRate,
     isRateSufficient,

@@ -3,6 +3,7 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ThemeToggle } from "./ThemeToggle";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export function Navbar() {
   return (
@@ -18,9 +19,13 @@ export function Navbar() {
         transition={{ delay: 0.2 }}
         className="flex items-center gap-4"
       >
-        <motion.h1 whileHover={{ scale: 1.05 }} className="text-xl font-bold">
-          Filecoin Services Uploader
-        </motion.h1>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          className="flex items-center gap-2"
+        >
+          <Image src="/filecoin.svg" alt="Filecoin" width={30} height={30} />
+          <h1 className="text-xl font-bold">Filecoin Services Uploader</h1>
+        </motion.div>
       </motion.div>
       <motion.div
         initial={{ opacity: 0, x: 20 }}

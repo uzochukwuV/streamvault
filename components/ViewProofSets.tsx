@@ -131,7 +131,7 @@ const RootDetails = ({ root }: { root: Root }) => {
       <button
         onClick={() => downloadMutation.mutate()}
         disabled={downloadMutation.isPending}
-        className="ml-4 px-3 py-1 text-sm rounded-lg border-2 border-black transition-all bg-black text-white hover:bg-white hover:text-black disabled:bg-gray-200 disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+        className="ml-4 px-3 py-1 text-sm rounded-lg border-2 border-black cursor-pointer transition-all bg-black text-white hover:bg-white hover:text-black disabled:bg-gray-200 disabled:border-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
       >
         {downloadMutation.isPending ? "Downloading..." : "Download"}
       </button>
