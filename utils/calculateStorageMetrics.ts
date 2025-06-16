@@ -38,7 +38,7 @@ export const calculateStorageMetrics = async (
   );
   const pandoraBalance = await pandoraService.checkAllowanceForStorage(
     storageCapacity,
-    false,
+    config.withCDN,
     synapse.payments
   );
 

@@ -2,6 +2,7 @@ import { getPandoraAddress } from "@/utils";
 import { Synapse } from "@filoz/synapse-sdk";
 import { PandoraService, CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
 import { PROOF_SET_CREATION_FEE } from "@/utils";
+import { config } from "@/config";
 
 /**
  * Performs a preflight check before file upload to ensure sufficient USDFC balance and allowances
@@ -39,7 +40,7 @@ export const preflightCheck = async (
   // Check if current allowance is sufficient for the file size
   const preflight = await pandoraService.checkAllowanceForStorage(
     file.size,
-    false,
+    config.withCDN,
     synapse.payments
   );
 
