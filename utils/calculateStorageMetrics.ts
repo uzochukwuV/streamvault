@@ -13,6 +13,8 @@ import { PandoraBalanceData, StorageCalculationResult } from "@/types";
 const STORAGE_CONSTANTS = {
   /** Price per TB per month in wei (2 USDFC) */
   PRICE_PER_TB_PER_MONTH: 2n * 10n ** 18n,
+  /** Price per TB per month in wei (3 USDFC) */
+  PRICE_PER_TB_PER_MONTH_CDN: 3n * 10n ** 18n,
 } as const;
 
 /**
@@ -104,36 +106,41 @@ export const calculateStorageMetrics = async (
   };
 };
 
+const getPricePerTBPerMonth = (): bigint => {
+  return config.withCDN
+    ? STORAGE_CONSTANTS.PRICE_PER_TB_PER_MONTH_CDN
+    : STORAGE_CONSTANTS.PRICE_PER_TB_PER_MONTH;
+};
+
 /**
  * Calculates the rate per epoch based on storage capacity
  */
-function calculateRatePerEpoch(sizeInBytes: bigint): bigint {
+const calculateRatePerEpoch = (sizeInBytes: bigint): bigint => {
   return (
-    (STORAGE_CONSTANTS.PRICE_PER_TB_PER_MONTH * sizeInBytes) /
+    (getPricePerTBPerMonth() * sizeInBytes) /
     (SIZE_CONSTANTS.TiB * TIME_CONSTANTS.EPOCHS_PER_MONTH)
   );
-}
+};
 
 /**
  * Calculates the storage capacity in GB that can be supported by a given rate allowance
  */
-function calculateRateAllowanceGB(rateAllowance: bigint): number {
+const calculateRateAllowanceGB = (rateAllowance: bigint): number => {
   const monthlyRate = rateAllowance * BigInt(TIME_CONSTANTS.EPOCHS_PER_MONTH);
   const bytesThatCanBeStored =
-    (monthlyRate * SIZE_CONSTANTS.TiB) /
-    STORAGE_CONSTANTS.PRICE_PER_TB_PER_MONTH;
+    (monthlyRate * SIZE_CONSTANTS.TiB) / getPricePerTBPerMonth();
   return Number(bytesThatCanBeStored) / Number(SIZE_CONSTANTS.GiB);
-}
+};
 
 /**
  * Calculates the required lockup amount based on persistence period and current lockup
  */
-function calculateRequiredLockup(
+const calculateRequiredLockup = (
   persistencePeriodDays: bigint,
   persistenceDaysLeft: number,
   lockupPerDay: bigint,
   currentLockupUsed: bigint
-): bigint {
+): bigint => {
   return Number(persistencePeriodDays) > persistenceDaysLeft
     ? BigInt(
         parseInt(
@@ -145,15 +152,15 @@ function calculateRequiredLockup(
         )
       )
     : 0n;
-}
+};
 
 /**
  * Calculates current storage usage based on rate usage
  */
-function calculateCurrentStorageUsage(
+const calculateCurrentStorageUsage = (
   pandoraBalance: PandoraBalanceData,
   storageCapacity: number
-): { currentStorageBytes: bigint; currentStorageGB: number } {
+): { currentStorageBytes: bigint; currentStorageGB: number } => {
   let currentStorageBytes = 0n;
   let currentStorageGB = 0;
 
@@ -172,4 +179,4 @@ function calculateCurrentStorageUsage(
   }
 
   return { currentStorageBytes, currentStorageGB };
-}
+};

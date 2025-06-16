@@ -4,6 +4,7 @@ import { useEthersSigner } from "@/hooks/useEthers";
 import { useAccount } from "wagmi";
 import { useNetwork } from "@/hooks/useNetwork";
 import { getProofset } from "@/utils/getProofset";
+import { config } from "@/config";
 
 /**
  * Hook to download a root from the Filecoin network using Synapse.
@@ -20,9 +21,25 @@ export const useDownloadRoot = (commp: string, filename: string) => {
       if (!chainId) throw new Error("Chain ID not found");
       if (!network) throw new Error("Network not found");
 
+      // If withCDN is true then download using https://<wallet-address>.calibration.filcdn.io/<commp> and ignore synapse
+      // NOTE: This direct CDN implementation will be replaced by SDK's native withCDN retrieval handling in future versions
+      if (config.withCDN) {
+        const url = `https://${address}.calibration.filcdn.io/${commp}`;
+        const response = await fetch(url);
+        const uint8ArrayBytes = await response.arrayBuffer();
+        const file = new File([uint8ArrayBytes], filename);
+        const fileUrl = URL.createObjectURL(file);
+        const a = document.createElement("a");
+        a.href = fileUrl;
+        a.download = filename;
+        a.click();
+        return file;
+      }
+
       // 1) Create Synapse instance
       const synapse = await Synapse.create({
         provider: signer.provider,
+        withCDN: config.withCDN,
       });
 
       // 2) Get proofset
@@ -44,6 +61,8 @@ export const useDownloadRoot = (commp: string, filename: string) => {
       a.href = url;
       a.download = filename;
       a.click();
+
+      return file;
     },
   });
 

@@ -10,4 +10,11 @@ export const config = {
   persistencePeriod: 30,
   // The minimum number of days of lockup needed to be sufficient
   minDaysThreshold: 10,
+  // Whether to use CDN for the storage for faster retrieval
+  withCDN: true,
+} satisfies {
+  storageCapacity: number;
+  persistencePeriod: number;
+  minDaysThreshold: number;
+  withCDN: boolean;
 };

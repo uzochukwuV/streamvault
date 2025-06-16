@@ -51,6 +51,12 @@ export const ViewProofSets = () => {
                       {proofset.isLive ? "Live" : "Inactive"}
                     </span>
                   </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    With CDN:{" "}
+                    <span className={`font-medium `}>
+                      {proofset.withCDN ? "⚡ Yes ⚡" : "No"}
+                    </span>
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-600">

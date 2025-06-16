@@ -63,6 +63,8 @@ export const config = {
   storageCapacity: 10, // GB, maximum storage capacity
   persistencePeriod: 30, // days, data persistence duration
   minDaysThreshold: 10, // days, threshold for low-balance warnings
+  // Whether to use CDN for the storage for faster retrieval
+  withCDN: true,
 };
 ```
 
@@ -71,6 +73,7 @@ export const config = {
 - **Higher `storageCapacity`** → Increased rate and lockup allowances. 📈
 - **Longer `persistencePeriod`** → Higher lockup allowance (more epochs to cover). ⏰
 - **Lower `minDaysThreshold`** → Earlier warnings about balance depletion. ⚠️
+- **`withCDN`** → Lightning ⚡ fast retrievals for a higher price 💰
 
 ## 💰 Balance & Storage Management
 

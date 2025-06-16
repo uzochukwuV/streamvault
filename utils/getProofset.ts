@@ -1,5 +1,6 @@
 import { CONTRACT_ADDRESSES, PandoraService } from "@filoz/synapse-sdk";
 import { JsonRpcSigner } from "ethers";
+import { config } from "@/config";
 
 // Pick the provider that has the most used storage
 // in a proofset with the client
@@ -14,7 +15,16 @@ export const getProofset = async (
   );
   let providerId;
   let bestProofset;
-  const proofSets = await pandoraService.getClientProofSetsWithDetails(address);
+  const AllproofSets =
+    await pandoraService.getClientProofSetsWithDetails(address);
+
+  const proofSetsWithCDN = AllproofSets.filter((proofSet) => proofSet.withCDN);
+
+  const proofSetsWithoutCDN = AllproofSets.filter(
+    (proofSet) => !proofSet.withCDN
+  );
+
+  const proofSets = config.withCDN ? proofSetsWithCDN : proofSetsWithoutCDN;
 
   try {
     bestProofset = proofSets.reduce((max, proofSet) => {

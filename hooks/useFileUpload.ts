@@ -7,6 +7,7 @@ import { useAccount } from "wagmi";
 import { useNetwork } from "@/hooks/useNetwork";
 import { preflightCheck } from "@/utils/preflightCheck";
 import { getProofset } from "@/utils/getProofset";
+import { config } from "@/config";
 
 export type UploadedInfo = {
   fileName?: string;
@@ -47,6 +48,7 @@ export const useFileUpload = () => {
       const synapse = await Synapse.create({
         provider: signer.provider,
         disableNonceManager: false,
+        withCDN: config.withCDN,
       });
 
       // 4) Get proofset
