@@ -55,6 +55,26 @@ export interface UseBalancesResponse {
   currentLockupAllowance: bigint;
 }
 
+export const defaultBalances: UseBalancesResponse = {
+  filBalance: 0n,
+  usdfcBalance: 0n,
+  pandoraBalance: 0n,
+  filBalanceFormatted: 0,
+  usdfcBalanceFormatted: 0,
+  pandoraBalanceFormatted: 0,
+  persistenceDaysLeft: 0,
+  persistenceDaysLeftAtCurrentRate: 0,
+  isSufficient: false,
+  isRateSufficient: false,
+  isLockupSufficient: false,
+  rateNeeded: 0n,
+  totalLockupNeeded: 0n,
+  depositNeeded: 0n,
+  currentRateAllowanceGB: 0,
+  currentStorageGB: 0,
+  currentLockupAllowance: 0n,
+};
+
 /**
  * Interface representing the Pandora balance data returned from the SDK
  */

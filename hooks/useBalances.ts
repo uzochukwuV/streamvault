@@ -5,7 +5,7 @@ import { useAccount } from "wagmi";
 import { calculateStorageMetrics } from "@/utils/calculateStorageMetrics";
 import { useNetwork } from "@/hooks/useNetwork";
 import { formatUnits } from "viem";
-import { UseBalancesResponse } from "@/types";
+import { defaultBalances, UseBalancesResponse } from "@/types";
 
 /**
  * Hook to fetch and format wallet balances and storage metrics
@@ -48,7 +48,10 @@ export const useBalances = () => {
     },
   });
 
-  return query;
+  return {
+    ...query,
+    data: query.data || defaultBalances,
+  };
 };
 
 /**

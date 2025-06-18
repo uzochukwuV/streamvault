@@ -8,6 +8,9 @@ import Confetti from "@/components/ui/Confetti";
 import { useConfetti } from "@/hooks/useConfetti";
 import { ViewProofSets } from "@/components/ViewProofSets";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useBalances } from "@/hooks/useBalances";
+import Github from "@/components/ui/icons/Github";
+import Filecoin from "@/components/ui/icons/Filecoin";
 
 type Tab = "manage-storage" | "upload" | "proof-set";
 
@@ -34,12 +37,13 @@ const itemVariants = {
 };
 
 export default function Home() {
-  const { isConnected } = useAccount();
+  const { isConnected, chainId } = useAccount();
   const [activeTab, setActiveTab] = useState<Tab>("manage-storage");
   const { showConfetti } = useConfetti();
+  const { data: balances, isLoading: isLoadingBalances } = useBalances();
 
   return (
-    <div className="w-full flex flex-col justify-center">
+    <div className="w-full flex flex-col justify-center min-h-fit">
       {showConfetti && (
         <Confetti
           recycle={false}
@@ -58,20 +62,67 @@ export default function Home() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex flex-col items-center p-5 mt-5 w-full mx-auto"
+        className="flex flex-col items-center my-10  w-full mx-auto"
       >
-        <motion.h1
+        <motion.div
           variants={itemVariants}
-          className="text-4xl font-bold mb-3 text-center text-foreground"
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.3 }}
+          className="text-3xl font-bold uppercase tracking-tighter text-foreground flex items-center gap-2"
         >
-          Demo dApp Powered by synapse-sdk
-        </motion.h1>
+          <Filecoin />
+          Fil services demo
+          <motion.a
+            whileHover={{ scale: 1.3 }}
+            href="https://github.com/FIL-Builders/fs-upload-dapp"
+            className="text-primary transition-colors duration-200 hover:underline cursor-pointer rounded-md hover:text-[#008cf6]"
+            target="_blank"
+          >
+            <Github />
+          </motion.a>
+          <motion.p
+            variants={itemVariants}
+            className="text-xl font-semibold lowercase transition-colors duration-50 hover:text-foreground flex items-center gap-2"
+          >
+            powered by
+            <motion.a
+              href="https://github.com/FilOzone/synapse-sdk"
+              className="text-primary transition-colors duration-200 hover:underline cursor-pointer hover:text-[#008cf6] rounded-md p-1"
+              target="_blank"
+            >
+              synapse-sdk
+            </motion.a>
+          </motion.p>
+        </motion.div>
+
         <motion.p
           variants={itemVariants}
-          className="text-xl font-bold mb-3 text-center text-foreground"
+          className="text-lg font-semibold capitalize-none transition-colors duration-50 mb-2  mt-1 hover:text-foreground flex items-center gap-2 text-center"
         >
-          Upload files to Filecoin using PDP
+          upload files to filecoin with{" "}
+          <motion.a
+            href="https://docs.secured.finance/usdfc-stablecoin/getting-started"
+            className="text-[#e9ac00] hover:underline cursor-pointer"
+            target="_blank"
+          >
+            USDFC
+          </motion.a>
+          your balance:
+          {isLoadingBalances || !isConnected
+            ? "..."
+            : balances?.usdfcBalanceFormatted.toFixed(1) + " $"}
         </motion.p>
+        {chainId !== 314159 && (
+          <motion.p
+            variants={itemVariants}
+            className="text-lg font-semibold capitalize-none transition-colors duration-50 mb-2  mt-1 hover:text-foreground flex items-center gap-2 text-center"
+          >
+            <span className="max-w-xl text-center bg-red-600/70  p-2 rounded-md">
+              ⚠️ Filecoin mainnet is not supported yet. Please use Filecoin
+              Calibration network.
+            </span>
+          </motion.p>
+        )}
         <AnimatePresence mode="wait">
           {!isConnected ? (
             <motion.div

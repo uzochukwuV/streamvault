@@ -6,11 +6,7 @@ import { useBalances } from "@/hooks/useBalances";
 import { usePayment } from "@/hooks/usePayment";
 import { config } from "@/config";
 import { formatUnits } from "viem";
-import {
-  AllowanceItemProps,
-  PaymentActionProps,
-  SectionProps,
-} from "@/types";
+import { AllowanceItemProps, PaymentActionProps, SectionProps } from "@/types";
 
 /**
  * Component to display and manage token payments for storage
@@ -18,10 +14,12 @@ import {
 export const StorageManager = () => {
   const { isConnected } = useAccount();
   const {
-    data: balances,
+    data,
     isLoading: isBalanceLoading,
     refetch: refetchBalances,
+    error,
   } = useBalances();
+  const balances = data;
   const { mutation: paymentMutation, status } = usePayment();
   const { mutateAsync: handlePayment, isPending: isProcessingPayment } =
     paymentMutation;
@@ -29,7 +27,7 @@ export const StorageManager = () => {
   const handleRefetchBalances = async () => {
     await refetchBalances();
   };
-
+  console.log(error);
   if (!isConnected) {
     return null;
   }
@@ -160,6 +158,33 @@ const ActionSection = ({
   const depositNeededFormatted = Number(
     formatUnits(balances?.depositNeeded ?? 0n, 18)
   ).toFixed(3);
+
+  if (balances.filBalance === 0n || balances.usdfcBalance === 0n) {
+    return (
+      <div className="space-y-4">
+        <div
+          className={`p-4 bg-red-50 rounded-lg border border-red-200 ${
+            balances.filBalance === 0n ? "block" : "hidden"
+          }`}
+        >
+          <p className="text-red-800">
+            ⚠️ You need to FIL tokens to pay for transaction fees. Please
+            deposit FIL tokens to your wallet.
+          </p>
+        </div>
+        <div
+          className={`p-4 bg-red-50 rounded-lg border border-red-200 ${
+            balances.usdfcBalance === 0n ? "block" : "hidden"
+          }`}
+        >
+          <p className="text-red-800">
+            ⚠️ You need to USDFC tokens to pay for storage. Please deposit USDFC
+            tokens to your wallet.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -310,27 +335,48 @@ const RateIncreaseAction = ({
 /**
  * Header section with title and USDFC faucet button
  */
-const StorageBalanceHeader = () => (
-  <div className="flex justify-between items-center pb-4 border-b">
-    <div>
-      <h3 className="text-xl font-semibold text-gray-900">Storage Balance</h3>
-      <p className="text-sm text-gray-500 mt-1">
-        Manage your USDFC deposits for Filecoin storage
-      </p>
+const StorageBalanceHeader = () => {
+  const { chainId } = useAccount();
+
+  return (
+    <div className="flex justify-between items-center pb-4 border-b">
+      <div>
+        <h3 className="text-xl font-semibold text-gray-900">Storage Balance</h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Manage your USDFC deposits for Filecoin storage
+        </p>
+      </div>
+      <div
+        className={`flex items-center gap-2 ${
+          chainId === 314159 ? "block" : "hidden"
+        }`}
+      >
+        <button
+          className="px-4 py-2 text-sm h-9 flex items-center justify-center rounded-lg border-2 border-black transition-all bg-black text-white hover:bg-white hover:text-black"
+          onClick={() => {
+            window.open(
+              "https://forest-explorer.chainsafe.dev/faucet/calibnet_usdfc",
+              "_blank"
+            );
+          }}
+        >
+          Get tUSDFC
+        </button>
+        <button
+          className="px-4 py-2 text-sm h-9 flex items-center justify-center rounded-lg border-2 border-black transition-all bg-black text-white hover:bg-white hover:text-black"
+          onClick={() => {
+            window.open(
+              "https://faucet.calibnet.chainsafe-fil.io/funds.html",
+              "_blank"
+            );
+          }}
+        >
+          Get tFIL
+        </button>
+      </div>
     </div>
-    <button
-      className="px-4 py-2 text-sm h-9 flex items-center justify-center rounded-lg border-2 border-black transition-all bg-black text-white hover:bg-white hover:text-black"
-      onClick={() => {
-        window.open(
-          "https://forest-explorer.chainsafe.dev/faucet/calibnet_usdfc",
-          "_blank"
-        );
-      }}
-    >
-      Get USDFC
-    </button>
-  </div>
-);
+  );
+};
 
 /**
  * Section displaying wallet balances

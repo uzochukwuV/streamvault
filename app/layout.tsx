@@ -11,6 +11,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { ConfettiProvider } from "@/providers/ConfettiProvider";
+import Footer from "@/components/ui/Footer";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <title>Fil services demo</title>
+        <meta
+          name="description"
+          content="Demo dApp Powered by synapse-sdk. Upload files to Filecoin with USDFC."
+        />
+        <meta
+          name="keywords"
+          content="Filecoin, Demo, synapse-sdk, pdp, upload, filecoin, usdfc"
+        />
+        <meta name="author" content="FIL-Builders" />
+        <meta name="viewport" content="width=device-width, initial-scale=0.6" />
+        <link rel="icon" href="/filecoin.svg" />
+      </head>
       <body>
         <ThemeProvider>
           <ConfettiProvider>
@@ -39,8 +54,11 @@ export default function RootLayout({
                   modalSize="compact"
                   initialChain={filecoinCalibration.id}
                 >
-                  <Navbar />
-                  {children}
+                  <main className="flex flex-col min-h-screen">
+                    <Navbar />
+                    {children}
+                  </main>
+                  <Footer />
                 </RainbowKitProvider>
               </WagmiProvider>
             </QueryClientProvider>
