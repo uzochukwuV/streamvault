@@ -110,6 +110,12 @@ export const useFileUpload = () => {
           setStatus(
             `📊 File uploaded! Signing msg to add roots to the proof set`
           );
+          setUploadedInfo((prev) => ({
+            ...prev,
+            fileName: file.name,
+            fileSize: file.size,
+            commp: commp,
+          }));
           setProgress(80);
         },
         onRootAdded: async (transactionResponse) => {
@@ -119,11 +125,14 @@ export const useFileUpload = () => {
             }`
           );
           if (transactionResponse) {
+            const receipt = await transactionResponse.wait();
+            console.log("Receipt:", receipt);
             setUploadedInfo((prev) => ({
               ...prev,
               txHash: transactionResponse?.hash,
             }));
           }
+          setStatus(`🔄 Waiting for storage provider confirmation`);
           setProgress(85);
         },
         onRootConfirmed: (rootIds) => {

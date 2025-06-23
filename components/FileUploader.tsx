@@ -155,7 +155,7 @@ export const FileUploader = () => {
         </div>
       )}
       {/* Uploaded file info panel */}
-      {uploadedInfo && (
+      {uploadedInfo && !isLoading && (
         <div className="mt-6 bg-background border border-border rounded-xl p-4 text-left">
           <h4 className="font-semibold mb-2 text-foreground">
             File Upload Details
