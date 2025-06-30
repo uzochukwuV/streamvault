@@ -4,12 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useAccount } from "wagmi";
-import { ProofSetDetails, ProofSetsResponse } from "@/types";
+import { ProofSetDetails, ProofSetsResponse, Provider } from "@/types";
 
-interface Provider {
-  owner: string;
-  pdpUrl: string;
-}
 /**
  * Fetches proofset details from a provider's API
  * @param proofsetId - The ID of the proofset
@@ -21,6 +17,10 @@ const fetchProofSetDetails = async (
   pdpUrl: string
 ): Promise<ProofSetDetails | null> => {
   try {
+    if (!pdpUrl.endsWith("/")) {
+      pdpUrl = `${pdpUrl}/`;
+    }
+
     const response = await fetch(`${pdpUrl}pdp/proof-sets/${proofsetId}`, {
       method: "GET",
       headers: {
@@ -77,38 +77,66 @@ export const useProofsets = () => {
       );
 
       // Fetch proofset details in parallel with proper error handling
-      const proofsetDetailsPromises = proofsets.map((proofset) => {
+      const proofsetDetailsPromises = proofsets.map(async (proofset) => {
         const pdpUrl = providerUrlMap.get(proofset.payee);
         if (!pdpUrl) {
           console.warn(`No provider URL found for payee ${proofset.payee}`);
-          return null;
+          return {
+            proofsetId: proofset.pdpVerifierProofSetId,
+            details: null,
+            pdpUrl: null,
+            provider: null,
+          };
         }
 
         try {
-          const details = fetchProofSetDetails(
+          const details = await fetchProofSetDetails(
             proofset.pdpVerifierProofSetId,
             pdpUrl
           );
-          return details;
+
+          // Find the full provider details
+          const provider = providers.find(
+            (p: Provider) => p.owner === proofset.payee
+          );
+
+          return {
+            proofsetId: proofset.pdpVerifierProofSetId,
+            details: details ? { ...details, pdpUrl } : null,
+            pdpUrl,
+            provider,
+          };
         } catch (error) {
           console.error(
             `Error fetching details for proofset ${proofset.pdpVerifierProofSetId}:`,
             error
           );
-          return null;
+          return {
+            proofsetId: proofset.pdpVerifierProofSetId,
+            details: null,
+            pdpUrl,
+            provider:
+              providers.find((p: Provider) => p.owner === proofset.payee) ||
+              null,
+          };
         }
       });
 
-      const proofsetDetails = await Promise.all(proofsetDetailsPromises);
+      const proofsetDetailsResults = await Promise.all(proofsetDetailsPromises);
 
       // Combine proof sets with their details
-      const proofsetsWithDetails = proofsets.map((proofset) => ({
-        ...proofset,
-        details:
-          proofsetDetails.find(
-            (details) => details?.id === proofset.pdpVerifierProofSetId
-          ) ?? null,
-      }));
+      const proofsetsWithDetails = proofsets.map((proofset) => {
+        const detailsResult = proofsetDetailsResults.find(
+          (result) => result.proofsetId === proofset.pdpVerifierProofSetId
+        );
+
+        return {
+          ...proofset,
+          details: detailsResult?.details ?? null,
+          pdpUrl: detailsResult?.pdpUrl ?? null,
+          provider: detailsResult?.provider ?? null,
+        };
+      });
 
       return { proofsets: proofsetsWithDetails };
     },

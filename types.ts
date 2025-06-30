@@ -5,10 +5,16 @@ export interface Root {
   subrootOffset: number;
 }
 
+export interface Provider {
+  owner: string;
+  pdpUrl: string;
+}
+
 export interface ProofSetDetails {
   id: number;
   roots: Root[];
   nextChallengeEpoch: number;
+  pdpUrl: string;
 }
 
 export interface ProofSet {
@@ -26,6 +32,8 @@ export interface ProofSet {
   isLive: boolean;
   isManaged: boolean;
   details: ProofSetDetails | null;
+  pdpUrl: string | null;
+  provider: Provider | null;
 }
 
 export interface ProofSetsResponse {

@@ -57,6 +57,20 @@ export const ViewProofSets = () => {
                       {proofset.withCDN ? "⚡ Yes ⚡" : "No"}
                     </span>
                   </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    PDP URL:{" "}
+                    <span
+                      className="cursor-pointer"
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          proofset.details?.pdpUrl || ""
+                        );
+                        window.alert("PDP URL copied to clipboard");
+                      }}
+                    >
+                      {proofset.details?.pdpUrl}
+                    </span>
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-600">
