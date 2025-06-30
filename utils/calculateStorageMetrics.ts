@@ -27,7 +27,7 @@ const STORAGE_CONSTANTS = {
  */
 export const calculateStorageMetrics = async (
   synapse: Synapse,
-  persistencePeriodDays: bigint = BigInt(config.persistencePeriod),
+  persistencePeriodDays: number = config.persistencePeriod,
   storageCapacity: number = config.storageCapacity * Number(SIZE_CONSTANTS.GiB),
   minDaysThreshold: bigint = BigInt(config.minDaysThreshold)
 ): Promise<StorageCalculationResult> => {
@@ -39,19 +39,15 @@ export const calculateStorageMetrics = async (
   const pandoraBalance = await pandoraService.checkAllowanceForStorage(
     storageCapacity,
     config.withCDN,
-    synapse.payments
+    synapse.payments,
+    persistencePeriodDays
   );
 
   // Calculate rate-related metrics
-  const rateNeeded =
-    pandoraBalance.rateAllowanceNeeded - pandoraBalance.currentRateUsed;
-  const sizeInBytesBigint = BigInt(storageCapacity);
-
-  // Calculate rate per epoch based on storage capacity
-  const ratePerEpoch = calculateRatePerEpoch(sizeInBytesBigint);
+  const rateNeeded = pandoraBalance.costs.perEpoch;
 
   // Calculate daily lockup requirements
-  const lockupPerDay = TIME_CONSTANTS.EPOCHS_PER_DAY * ratePerEpoch;
+  const lockupPerDay = TIME_CONSTANTS.EPOCHS_PER_DAY * rateNeeded;
   const lockupPerDayAtCurrentRate =
     TIME_CONSTANTS.EPOCHS_PER_DAY * pandoraBalance.currentRateUsed;
 
@@ -67,14 +63,6 @@ export const calculateStorageMetrics = async (
         ? Infinity
         : 0;
 
-  // Calculate required lockup amount
-  const lockupNeeded = calculateRequiredLockup(
-    persistencePeriodDays,
-    persistenceDaysLeft,
-    lockupPerDay,
-    pandoraBalance.currentLockupUsed
-  );
-
   // Calculate current storage usage
   const { currentStorageBytes, currentStorageGB } =
     calculateCurrentStorageUsage(pandoraBalance, storageCapacity);
@@ -87,14 +75,14 @@ export const calculateStorageMetrics = async (
   const currentRateAllowanceGB = calculateRateAllowanceGB(
     pandoraBalance.currentRateAllowance
   );
-  const depositNeeded = lockupNeeded - pandoraBalance.currentLockupAllowance;
+  const depositNeeded = pandoraBalance.depositAmountNeeded;
 
   return {
     rateNeeded,
     rateUsed: pandoraBalance.currentRateUsed,
     currentStorageBytes,
     currentStorageGB,
-    totalLockupNeeded: lockupNeeded,
+    totalLockupNeeded: pandoraBalance.lockupAllowanceNeeded,
     depositNeeded,
     persistenceDaysLeft,
     persistenceDaysLeftAtCurrentRate,
@@ -113,16 +101,6 @@ const getPricePerTBPerMonth = (): bigint => {
 };
 
 /**
- * Calculates the rate per epoch based on storage capacity
- */
-const calculateRatePerEpoch = (sizeInBytes: bigint): bigint => {
-  return (
-    (getPricePerTBPerMonth() * sizeInBytes) /
-    (SIZE_CONSTANTS.TiB * TIME_CONSTANTS.EPOCHS_PER_MONTH)
-  );
-};
-
-/**
  * Calculates the storage capacity in GB that can be supported by a given rate allowance
  */
 const calculateRateAllowanceGB = (rateAllowance: bigint): number => {
@@ -130,28 +108,6 @@ const calculateRateAllowanceGB = (rateAllowance: bigint): number => {
   const bytesThatCanBeStored =
     (monthlyRate * SIZE_CONSTANTS.TiB) / getPricePerTBPerMonth();
   return Number(bytesThatCanBeStored) / Number(SIZE_CONSTANTS.GiB);
-};
-
-/**
- * Calculates the required lockup amount based on persistence period and current lockup
- */
-const calculateRequiredLockup = (
-  persistencePeriodDays: bigint,
-  persistenceDaysLeft: number,
-  lockupPerDay: bigint,
-  currentLockupUsed: bigint
-): bigint => {
-  return Number(persistencePeriodDays) > persistenceDaysLeft
-    ? BigInt(
-        parseInt(
-          (
-            (Number(persistencePeriodDays) - persistenceDaysLeft) *
-              Number(lockupPerDay) +
-            Number(currentLockupUsed)
-          ).toString()
-        )
-      )
-    : 0n;
 };
 
 /**
@@ -172,7 +128,8 @@ const calculateCurrentStorageUsage = (
       currentStorageBytes =
         (pandoraBalance.currentRateUsed * BigInt(storageCapacity)) /
         pandoraBalance.rateAllowanceNeeded;
-      currentStorageGB = Number(currentStorageBytes) / (1024 * 1024 * 1024);
+      currentStorageGB =
+        Number(currentStorageBytes) / Number(SIZE_CONSTANTS.GiB);
     } catch (error) {
       console.warn("Failed to calculate current storage usage:", error);
     }
