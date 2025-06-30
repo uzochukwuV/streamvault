@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@filoz/synapse-sdk": "^0.13.0",
+    "@filoz/synapse-sdk": "^0.15.0",
     "@rainbow-me/rainbowkit": "^2.2.5",
     "@tanstack/react-query": "^5.28.4",
     "@wagmi/core": "^2.6.7",
