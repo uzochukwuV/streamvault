@@ -76,10 +76,13 @@ export const useFileUpload = () => {
         providerId,
         callbacks: {
           onProofSetResolved: (info) => {
+            console.log("Proof set resolved:", info);
             setStatus("🔗 Existing proof set found and resolved");
             setProgress(30);
           },
           onProofSetCreationStarted: (transactionResponse, statusUrl) => {
+            console.log("Proof set creation started:", transactionResponse);
+            console.log("Proof set creation status URL:", statusUrl);
             setStatus("🏗️ Creating new proof set on blockchain...");
             setProgress(35);
           },
@@ -97,6 +100,7 @@ export const useFileUpload = () => {
             }
           },
           onProviderSelected: (provider) => {
+            console.log("Storage provider selected:", provider);
             setStatus(`🏪 Storage provider selected`);
           },
         },
@@ -114,7 +118,7 @@ export const useFileUpload = () => {
             ...prev,
             fileName: file.name,
             fileSize: file.size,
-            commp: commp,
+            commp: commp.toString(),
           }));
           setProgress(80);
         },
@@ -152,7 +156,7 @@ export const useFileUpload = () => {
         ...prev,
         fileName: file.name,
         fileSize: file.size,
-        commp: commp,
+        commp: commp.toString(),
       }));
     },
     onSuccess: () => {
