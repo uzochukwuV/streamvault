@@ -46,7 +46,7 @@ export const useFileUpload = () => {
 
       // 3) Create Synapse instance
       const synapse = await Synapse.create({
-        provider: signer.provider,
+        signer,
         disableNonceManager: false,
         withCDN: config.withCDN,
       });
@@ -122,34 +122,25 @@ export const useFileUpload = () => {
           }));
           setProgress(80);
         },
-        onRootAdded: async (transactionResponse) => {
+        onRootAdded: (transactionResponse) => {
           setStatus(
             `🔄 Waiting for transaction to be confirmed on chain${
               transactionResponse ? `(txHash: ${transactionResponse.hash})` : ""
             }`
           );
           if (transactionResponse) {
-            const receipt = await transactionResponse.wait();
-            console.log("Receipt:", receipt);
+            console.log("Transaction response:", transactionResponse);
             setUploadedInfo((prev) => ({
               ...prev,
               txHash: transactionResponse?.hash,
             }));
           }
-          setStatus(`🔄 Waiting for storage provider confirmation`);
-          setProgress(85);
         },
         onRootConfirmed: (rootIds) => {
           setStatus("🌳 Data roots added to proof set successfully");
           setProgress(90);
         },
       });
-
-      // In case the transaction was not given back by the storage provider, we wait for 50 seconds
-      // So we make sure that the transaction is confirmed on chain
-      if (!uploadedInfo?.txHash) {
-        await new Promise((resolve) => setTimeout(resolve, 50000));
-      }
 
       setProgress(95);
       setUploadedInfo((prev) => ({
