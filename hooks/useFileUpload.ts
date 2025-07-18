@@ -54,7 +54,9 @@ export const useFileUpload = () => {
       // 4) Get proofset
       const { providerId } = await getProofset(signer, network, address);
       // 5) Check if we have a proofset
-      const withProofset = !!providerId;
+      const proofsetExists = !!providerId;
+      // Include proofset creation fee if no proofset exists
+      const includeProofsetCreationFee = !proofsetExists;
 
       // 6) Check if we have enough USDFC to cover the storage costs and deposit if not
       setStatus("💰 Checking USDFC balance and storage allowances...");
@@ -63,7 +65,7 @@ export const useFileUpload = () => {
         file,
         synapse,
         network,
-        withProofset,
+        includeProofsetCreationFee,
         setStatus,
         setProgress
       );
