@@ -3,7 +3,6 @@ import { Synapse } from "@filoz/synapse-sdk";
 import { useEthersSigner } from "@/hooks/useEthers";
 import { useAccount } from "wagmi";
 import { useNetwork } from "@/hooks/useNetwork";
-import { getProofset } from "@/utils/getProofset";
 import { config } from "@/config";
 
 /**
@@ -27,15 +26,10 @@ export const useDownloadRoot = (commp: string, filename: string) => {
         withCDN: config.withCDN,
       });
 
-      // 2) Get proofset
-      const { providerId } = await getProofset(signer, network, address);
+      // 2) Create storage service
+      const storageService = await synapse.createStorage();
 
-      // 3) Create storage service
-      const storageService = await synapse.createStorage({
-        providerId,
-      });
-
-      // 4) Download file
+      // 3) Download file
       const uint8ArrayBytes = await storageService.download(commp);
 
       const file = new File([uint8ArrayBytes], filename);

@@ -5,7 +5,7 @@ import { useConfetti } from "@/hooks/useConfetti";
 import { useNetwork } from "@/hooks/useNetwork";
 import { Synapse, TOKENS, CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
 import {
-  getPandoraAddress,
+  getPandoraServiceAddress,
   PROOF_SET_CREATION_FEE,
   MAX_UINT256,
   getProofset,
@@ -67,7 +67,7 @@ export const usePayment = () => {
         throw new Error("Insufficient USDFC balance");
       }
 
-      if (allowance < MAX_UINT256) {
+      if (allowance < MAX_UINT256 / 2n) {
         setStatus("💰 Approving USDFC to cover storage costs...");
         const transaction = await synapse.payments.approve(
           TOKENS.USDFC,
@@ -86,7 +86,7 @@ export const usePayment = () => {
 
       setStatus("💰 Approving Pandora service USDFC spending rates...");
       const transaction = await synapse.payments.approveService(
-        getPandoraAddress(network),
+        getPandoraServiceAddress(network),
         epochRateAllowance,
         lockupAllowance + fee
       );

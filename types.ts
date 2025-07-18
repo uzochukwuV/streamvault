@@ -88,10 +88,19 @@ export const defaultBalances: UseBalancesResponse = {
  */
 export interface PandoraBalanceData {
   rateAllowanceNeeded: bigint;
-  currentRateUsed: bigint;
+  lockupAllowanceNeeded: bigint;
   currentRateAllowance: bigint;
   currentLockupAllowance: bigint;
+  currentRateUsed: bigint;
   currentLockupUsed: bigint;
+  sufficient: boolean;
+  message?: string;
+  costs: {
+    perEpoch: bigint;
+    perDay: bigint;
+    perMonth: bigint;
+  };
+  depositAmountNeeded: bigint;
 }
 
 /**
@@ -153,4 +162,9 @@ export interface AllowanceItemProps {
   label: string;
   isSufficient?: boolean;
   isLoading?: boolean;
+}
+
+export interface StorageCosts {
+  pricePerTiBPerMonthNoCDN: bigint;
+  pricePerTiBPerMonthWithCDN: bigint;
 }

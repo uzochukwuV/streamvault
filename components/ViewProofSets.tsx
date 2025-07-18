@@ -39,7 +39,7 @@ export const ViewProofSets = () => {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h4 className="text-lg font-medium text-gray-900">
-                    Proof Set #{proofset.railId}
+                    Proof Set #{proofset.pdpVerifierProofSetId}
                   </h4>
                   <p className="text-sm text-gray-500 mt-1">
                     Status:{" "}
