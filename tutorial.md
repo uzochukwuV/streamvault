@@ -35,8 +35,8 @@ The application is organized into four primary workflows, powered by custom hook
 - **💰 Balance & Storage Management:** [`useBalances`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useBalances.ts), [`calculateStorageMetrics`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/calculateStorageMetrics.ts)
 - **💳 Storage Payments with USDFC:** [`usePayment`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/usePayment.ts)
 - **📤 File Uploads:** [`useFileUpload`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useFileUpload.ts), [`preflightCheck`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/preflightCheck.ts)
-- **🔍 Proof Set Resolution:** [`useProofsets`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useProofsets.ts)
-- **📥 File Downloads:** [`useDownloadRoot`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useDownloadRoot.ts)
+- **🔍 Data Set Resolution:** [`useDatasets`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useDatasets.ts)
+- **📥 File Downloads:** [`useDownloadPiece`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useDownloadPiece.ts)
 
 ### 💸 How Payments Work
 
@@ -44,13 +44,13 @@ The Synapse payment system uses two complementary allowances:
 
 #### 1. **Rate Allowance** (`rateAllowance`)
 
-- **Definition:** Maximum USDFC the Pandora service can spend per epoch.
+- **Definition:** Maximum USDFC the FilecoinWarmStorageService can spend per epoch.
 - **Purpose:** Automates payments to storage providers for ongoing storage.
 - **Calculation:** Proportional to your storage needs - higher storage requirements demand higher epoch rates.
 
 #### 2. **Lockup Allowance** (`lockupAllowance`)
 
-- **Definition:** Total USDFC that Pandora can reserve upfront to guarantee storage provider payments for your target persistence duration.
+- **Definition:** Total USDFC that FilecoinWarmStorageService can reserve upfront to guarantee storage provider payments for your target persistence duration.
 - **Purpose:** Secures payment for the entire storage period and enables uninterrupted Proof of Data Possession (PDP) validation.
 - **Calculation:** (Rate allowance × target persistence days) + existing lockup commitments
 
@@ -101,7 +101,7 @@ const { data, isLoading, isError, error } = useBalances();
 const {
   filBalance,
   usdfcBalance,
-  pandoraBalance,
+  filecoinWarmStorageServiceBalance,
   persistenceDaysLeft,
   isSufficient,
   rateNeeded,
@@ -113,7 +113,7 @@ const {
 The [`usePayment`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/usePayment.ts) hook handles payments with inputs being calculated by the `useBalances` hook:
 
 1. **Approve & Deposit USDFC** to Synapse payment contract for storage escrow
-2. **Approve Pandora Service** to spend USDFC at specified rates for automated payments per epoch
+2. **Approve FilecoinWarmStorageService** to spend USDFC at specified rates for automated payments per epoch
 
 Payment handling via:
 
@@ -145,14 +145,14 @@ The [`useFileUpload`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/h
    - 💰 **Insufficient Balance**: Prompts user to deposit more USDFC if current balance is inadequate
    - ✅ **Balance Verified**: Proceeds to next step when sufficient funds are available
 
-2. **Proof Set Resolution**: Finds or creates the proofset for file upload via [`getProofset`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/getProofset.ts)
+2. **Data Set Resolution**: Finds or creates the dataset for file upload via [`getDataset`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/utils/getDataset.ts)
 
-   - 🔍 **Existing Proofset**: Uses the current active proofset if one exists
-   - ⚡ **New Proofset**: Creates a new proofset if none exists for the user
+   - 🔍 **Existing Dataset**: Uses the current active dataset if one exists
+   - ⚡ **New Dataset**: Creates a new dataset if none exists for the user
 
-3. **File Upload**: Uploads to Filecoin with PDP (Proof of Data Possession) by interacting with the storage provider that handles the proofset
+3. **File Upload**: Uploads to Filecoin with PDP (Proof of Data Possession) by interacting with the storage provider that handles the dataset
    - 📤 **File Transfer**: Securely uploads file data to the designated storage provider
-   - 🔐 **Root Registration**: Signs and sends an `addroot` request to the storage provider, enabling them to submit the file root to the proofset for PDP verification
+   - 🔐 **Piece Registration**: Signs and sends an `addpiece` request to the storage provider, enabling them to submit the file piece to the dataset for PDP verification
 
 Uploading a file via:
 
@@ -164,37 +164,37 @@ const { mutateAsync: uploadFile } = uploadFileMutation;
 await uploadFile(selectedFile);
 ```
 
-## 🔍 Proof Set Management & Inspection
+## 🔍 Data Set Management & Inspection
 
-**Component**: [`ViewProofSets.tsx`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/components/ViewProofSets.tsx)
+**Component**: [`ViewDataSets.tsx`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/components/ViewDataSets.tsx)
 
-### Proofset Viewer
+### Dataset Viewer
 
-The ViewProofSets component provides a dashboard to monitor proof sets and manage file downloads.
+The ViewDataSets component provides a dashboard to monitor data sets and manage file downloads.
 
 <img src="public/view-proofsets.png" width="800" alt="ProofsetsViewer preview" />
 
 ### How it Works
 
-The [`useProofsets`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useProofsets.ts) hook provides visibility into:
+The [`useDatasets`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useDatasets.ts) hook provides visibility into:
 
-- **Client Proof Sets**: All proof sets associated with your address
+- **Client Data Sets**: All data sets associated with your address
 - **Provider Details**: Information about storage providers
-- **Proof Set Status**: Current state and details from provider APIs
+- **Data Set Status**: Current state and details from provider APIs
 
-Getting proofsets via:
+Getting datasets via:
 
 ```typescript
-const { data, isLoading: isLoadingProofsets } = useProofsets();
+const { data, isLoading: isLoadingDatasets } = useDatasets();
 
-const { proofsets } = data;
+const { datasets } = data;
 
-const proofsetCIDs = Record<string, string[]>();
+const datasetCIDs = Record<string, string[]>();
 
-proofsets.forEach((proofset) => {
-  if (proofset.details?.roots) {
-    proofsetCIDs[proofset.railId] = proofset.details.roots.map(
-      (root) => root.rootCid
+datasets.forEach((dataset) => {
+  if (dataset.details?.pieces) {
+    datasetCIDs[dataset.railId] = dataset.details.pieces.map(
+      (piece) => piece.pieceCid
     );
   }
 });
@@ -202,12 +202,12 @@ proofsets.forEach((proofset) => {
 
 ---
 
-The [`useDownloadRoot`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useDownloadRoot.ts) hook enables file downloads from storage providers using the file's root CID and filename. The filename helps determine the correct MIME type for proper browser handling.
+The [`useDownloadPiece`](https://github.com/FIL-Builders/fs-upload-dapp/blob/main/hooks/useDownloadPiece.ts) hook enables file downloads from storage providers using the file's piece CID and filename. The filename helps determine the correct MIME type for proper browser handling.
 
 Downloading a file via:
 
 ```typescript
-const { downloadMutation } = useDownloadRoot(rootCID, filename);
+const { downloadMutation } = useDownloadPiece(pieceCID, filename);
 const { mutateAsync: downloadFile } = downloadMutation;
 
 // Download file
@@ -216,7 +216,7 @@ await downloadFile();
 
 ## 🚀 Next Steps
 
-- **📊 Monitor Storage**: Use the proof set viewer to track your stored data
+- **📊 Monitor Storage**: Use the data set viewer to track your stored data
 - **💡 Optimize Costs**: Adjust persistence periods based on usage patterns
 - **📈 Scale Up**: Increase storage capacity and deposit additional USDFC as your data usage grows
 - **🔧 Integrate**: Use the patterns to build your own decentralized powered storage applications
@@ -228,5 +228,5 @@ await downloadFile();
 - **Synapse SDK**: [NPM Package](https://www.npmjs.com/package/@filoz/synapse-sdk)
 - **PDP**: [PDP Docs](https://github.com/FilOzone/pdp/blob/main/docs/design.md)
 - **Payments contract**: [Payments Contracts](https://github.com/FilOzone/filecoin-services-payments/blob/main/README.md)
-- **Pandora**: [Pandora Contracts](https://github.com/FilOzone/filecoin-services/blob/main/README.md)
+- **FilecoinWarmStorageService**: [FilecoinWarmStorageService Contracts](https://github.com/FilOzone/filecoin-services/blob/main/README.md)
 - **USDFC Documentation**: [Secured Finance](https://docs.secured.finance/usdfc-stablecoin/getting-started)

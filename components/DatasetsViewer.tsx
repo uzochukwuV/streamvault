@@ -2,13 +2,13 @@
 "use client";
 
 import { useAccount } from "wagmi";
-import { useProofsets } from "@/hooks/useProofsets";
-import { useDownloadRoot } from "@/hooks/useDownloadRoot";
-import { ProofSet, Root } from "@/types";
+import { useDatasets } from "@/hooks/useDatasets";
+import { useDownloadPiece } from "@/hooks/useDownloadPiece";
+import { DataSet, Piece } from "@/types";
 
-export const ViewProofSets = () => {
+export const DatasetsViewer = () => {
   const { isConnected } = useAccount();
-  const { data, isLoading: isLoadingProofsets } = useProofsets();
+  const { data, isLoading: isLoadingDatasets } = useDatasets();
 
   if (!isConnected) {
     return null;
@@ -18,43 +18,43 @@ export const ViewProofSets = () => {
     <div className="mt-4 p-6 border rounded-lg bg-white shadow-sm max-h-[900px] overflow-y-auto">
       <div className="flex justify-between items-center pb-4 border-b">
         <div className="sticky top-0 bg-white z-10">
-          <h3 className="text-xl font-semibold text-gray-900">Proof Sets</h3>
+          <h3 className="text-xl font-semibold text-gray-900">Datasets</h3>
           <p className="text-sm text-gray-500 mt-1">
-            View and manage your storage proof sets
+            View and manage your storage datasets
           </p>
         </div>
       </div>
 
-      {isLoadingProofsets ? (
+      {isLoadingDatasets ? (
         <div className="flex justify-center items-center py-8">
-          <p className="text-gray-500">Loading proof sets...</p>
+          <p className="text-gray-500">Loading datasets...</p>
         </div>
-      ) : data && data.proofsets && data.proofsets.length > 0 ? (
+      ) : data && data.datasets && data.datasets.length > 0 ? (
         <div className="mt-4 space-y-6">
-          {data.proofsets.map((proofset: ProofSet) => (
+          {data.datasets.map((dataset: DataSet) => (
             <div
-              key={proofset.railId}
+              key={dataset.railId}
               className="bg-gray-50 rounded-lg p-4 border border-gray-200"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h4 className="text-lg font-medium text-gray-900">
-                    Proof Set #{proofset.pdpVerifierProofSetId}
+                    Dataset #{dataset.pdpVerifierProofSetId}
                   </h4>
                   <p className="text-sm text-gray-500 mt-1">
                     Status:{" "}
                     <span
                       className={`font-medium ${
-                        proofset.isLive ? "text-green-600" : "text-red-600"
+                        dataset.isLive ? "text-green-600" : "text-red-600"
                       }`}
                     >
-                      {proofset.isLive ? "Live" : "Inactive"}
+                      {dataset.isLive ? "Live" : "Inactive"}
                     </span>
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
                     With CDN:{" "}
                     <span className={`font-medium `}>
-                      {proofset.withCDN ? "⚡ Yes ⚡" : "No"}
+                      {dataset.withCDN ? "⚡ Yes ⚡" : "No"}
                     </span>
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
@@ -63,57 +63,57 @@ export const ViewProofSets = () => {
                       className="cursor-pointer"
                       onClick={() => {
                         navigator.clipboard.writeText(
-                          proofset.details?.pdpUrl || ""
+                          dataset.details?.pdpUrl || ""
                         );
                         window.alert("PDP URL copied to clipboard");
                       }}
                     >
-                      {proofset.details?.pdpUrl}
+                      {dataset.details?.pdpUrl}
                     </span>
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-600">
-                    Commission: {proofset.commissionBps / 100}%
+                    Commission: {dataset.commissionBps / 100}%
                   </p>
                   <p className="text-sm text-gray-600">
-                    Managed: {proofset.isManaged ? "Yes" : "No"}
+                    Managed: {dataset.isManaged ? "Yes" : "No"}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4">
                 <h5 className="text-sm font-medium text-gray-900 mb-2">
-                  Root Details
+                  Piece Details
                 </h5>
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-gray-600">
-                        Current Root Count
+                        Current Piece Count
                       </p>
-                      <p className="font-medium">{proofset.currentRootCount}</p>
+                      <p className="font-medium">{dataset.currentRootCount}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Next Root ID</p>
-                      <p className="font-medium">{proofset.nextRootId}</p>
+                      <p className="text-sm text-gray-600">Next Piece ID</p>
+                      <p className="font-medium">{dataset.nextRootId}</p>
                     </div>
                   </div>
 
-                  {proofset.details?.roots && (
+                  {dataset.details?.roots && (
                     <div className="mt-4">
                       <div className="flex justify-between items-center mb-2">
                         <h6 className="text-sm font-medium text-gray-900">
-                          Available Roots
+                          Available Pieces
                         </h6>
                         <p className="text-sm text-gray-500">
                           Next Challenge: Epoch{" "}
-                          {proofset.details.nextChallengeEpoch}
+                          {dataset.details.nextChallengeEpoch}
                         </p>
                       </div>
                       <div className="space-y-2">
-                        {proofset.details.roots.map((root) => (
-                          <RootDetails key={root.rootId} root={root} />
+                        {dataset.details.roots.map((piece) => (
+                          <PieceDetails key={piece.rootId} piece={piece} />
                         ))}
                       </div>
                     </div>
@@ -125,7 +125,7 @@ export const ViewProofSets = () => {
         </div>
       ) : (
         <div className="flex justify-center items-center py-8">
-          <p className="text-gray-500">No proof sets found</p>
+          <p className="text-gray-500">No datasets found</p>
         </div>
       )}
     </div>
@@ -133,20 +133,22 @@ export const ViewProofSets = () => {
 };
 
 /**
- * Component to display a root and a download button
+ * Component to display a piece and a download button
  */
-const RootDetails = ({ root }: { root: Root }) => {
-  const filename = `root-${root.rootId}.png`;
-  const { downloadMutation } = useDownloadRoot(root.rootCid, filename);
+const PieceDetails = ({ piece }: { piece: Piece }) => {
+  const filename = `piece-${piece.rootId}.png`;
+  const { downloadMutation } = useDownloadPiece(piece.rootCid, filename);
 
   return (
     <div
-      key={root.rootId}
+      key={piece.rootId}
       className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200"
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">Root #{root.rootId}</p>
-        <p className="text-xs text-gray-500 truncate">{root.rootCid}</p>
+        <p className="text-sm font-medium text-gray-900">
+          Piece #{piece.rootId}
+        </p>
+        <p className="text-xs text-gray-500 truncate">{piece.rootCid}</p>
       </div>
       <button
         onClick={() => downloadMutation.mutate()}

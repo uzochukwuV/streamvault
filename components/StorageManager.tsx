@@ -60,8 +60,8 @@ export const StorageManager = () => {
             status.includes("❌")
               ? "bg-red-50 border border-red-200 text-red-800"
               : status.includes("✅")
-                ? "bg-green-50 border border-green-200 text-green-800"
-                : "bg-blue-50 border border-blue-200 text-blue-800"
+              ? "bg-green-50 border border-green-200 text-green-800"
+              : "bg-blue-50 border border-blue-200 text-blue-800"
           }`}
         >
           {status}
@@ -402,11 +402,11 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
         </span>
       </div>
       <div className="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
-        <span className="text-sm text-gray-600">Pandora Balance</span>
+        <span className="text-sm text-gray-600">Warm Storage Balance</span>
         <span className="font-medium text-gray-600">
           {isLoading
             ? "..."
-            : `${balances?.pandoraBalanceFormatted?.toLocaleString()} USDFC`}
+            : `${balances?.filecoinWarmStorageBalanceFormatted?.toLocaleString()} USDFC`}
         </span>
       </div>
       <div className="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
@@ -472,7 +472,9 @@ const AllowanceItem = ({
   <div className="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
     <span className="text-sm text-gray-600">{label}</span>
     <span
-      className={`font-medium ${isSufficient ? "text-green-600" : "text-red-600"}`}
+      className={`font-medium ${
+        isSufficient ? "text-green-600" : "text-red-600"
+      }`}
     >
       {isLoading ? "..." : isSufficient ? "Sufficient" : "Insufficient"}
     </span>

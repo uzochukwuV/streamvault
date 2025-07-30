@@ -6,14 +6,14 @@ import { useNetwork } from "@/hooks/useNetwork";
 import { config } from "@/config";
 
 /**
- * Hook to download a root from the Filecoin network using Synapse.
+ * Hook to download a piece from the Filecoin network using Synapse.
  */
-export const useDownloadRoot = (commp: string, filename: string) => {
+export const useDownloadPiece = (commp: string, filename: string) => {
   const signer = useEthersSigner();
   const { address, chainId } = useAccount();
   const { data: network } = useNetwork();
   const mutation = useMutation({
-    mutationKey: ["download-root", address, commp, filename],
+    mutationKey: ["download-piece", address, commp, filename],
     mutationFn: async () => {
       if (!signer) throw new Error("Signer not found");
       if (!address) throw new Error("Address not found");

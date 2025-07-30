@@ -6,7 +6,7 @@ import { useConfetti } from "@/hooks/useConfetti";
 import { useAccount } from "wagmi";
 import { useNetwork } from "@/hooks/useNetwork";
 import { preflightCheck } from "@/utils/preflightCheck";
-import { getProofset } from "@/utils/getProofset";
+import { getDataset } from "@/utils/getDataset";
 import { config } from "@/config";
 
 export type UploadedInfo = {
@@ -51,12 +51,12 @@ export const useFileUpload = () => {
         withCDN: config.withCDN,
       });
 
-      // 4) Get proofset
-      const { providerId } = await getProofset(signer, network, address);
-      // 5) Check if we have a proofset
-      const proofsetExists = !!providerId;
+      // 4) Get dataset
+      const { providerId } = await getDataset(signer, network, address);
+      // 5) Check if we have a dataset
+      const datasetExists = !!providerId;
       // Include proofset creation fee if no proofset exists
-      const includeProofsetCreationFee = !proofsetExists;
+      const includeDatasetCreationFee = !datasetExists;
 
       // 6) Check if we have enough USDFC to cover the storage costs and deposit if not
       setStatus("💰 Checking USDFC balance and storage allowances...");
@@ -65,12 +65,12 @@ export const useFileUpload = () => {
         file,
         synapse,
         network,
-        includeProofsetCreationFee,
+        includeDatasetCreationFee,
         setStatus,
         setProgress
       );
 
-      setStatus("🔗 Setting up storage service and proof set...");
+      setStatus("🔗 Setting up storage service and dataset...");
       setProgress(25);
 
       // 7) Create storage service
@@ -78,25 +78,25 @@ export const useFileUpload = () => {
         providerId,
         callbacks: {
           onProofSetResolved: (info) => {
-            console.log("Proof set resolved:", info);
-            setStatus("🔗 Existing proof set found and resolved");
+            console.log("Dataset resolved:", info);
+            setStatus("🔗 Existing dataset found and resolved");
             setProgress(30);
           },
           onProofSetCreationStarted: (transactionResponse, statusUrl) => {
-            console.log("Proof set creation started:", transactionResponse);
-            console.log("Proof set creation status URL:", statusUrl);
-            setStatus("🏗️ Creating new proof set on blockchain...");
+            console.log("Dataset creation started:", transactionResponse);
+            console.log("Dataset creation status URL:", statusUrl);
+            setStatus("🏗️ Creating new dataset on blockchain...");
             setProgress(35);
           },
           onProofSetCreationProgress: (status) => {
-            console.log("Proof set creation progress:", status);
+            console.log("Dataset creation progress:", status);
             if (status.transactionSuccess) {
-              setStatus(`⛓️ Proof set transaction confirmed on chain`);
+              setStatus(`⛓️ Dataset transaction confirmed on chain`);
               setProgress(45);
             }
             if (status.serverConfirmed) {
               setStatus(
-                `🎉 Proof set ready! (${Math.round(status.elapsedMs / 1000)}s)`
+                `🎉 Dataset ready! (${Math.round(status.elapsedMs / 1000)}s)`
               );
               setProgress(50);
             }
@@ -114,7 +114,7 @@ export const useFileUpload = () => {
       const { commp } = await storageService.upload(uint8ArrayBytes, {
         onUploadComplete: (commp) => {
           setStatus(
-            `📊 File uploaded! Signing msg to add roots to the proof set`
+            `📊 File uploaded! Signing msg to add pieces to the dataset`
           );
           setUploadedInfo((prev) => ({
             ...prev,
@@ -138,8 +138,8 @@ export const useFileUpload = () => {
             }));
           }
         },
-        onRootConfirmed: (rootIds) => {
-          setStatus("🌳 Data roots added to proof set successfully");
+        onRootConfirmed: (pieceIds) => {
+          setStatus("🌳 Data pieces added to dataset successfully");
           setProgress(90);
         },
       });

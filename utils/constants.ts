@@ -1,7 +1,7 @@
 import { CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
 
-// Returns the Pandora service address for the given network
-export const getPandoraServiceAddress = (
+// Returns the FilecoinWarmStorage service address for the given network
+export const getFilecoinWarmStorageServiceAddress = (
   network: "mainnet" | "calibration"
 ) => {
   return CONTRACT_ADDRESSES.PANDORA_SERVICE[network];
@@ -9,5 +9,5 @@ export const getPandoraServiceAddress = (
 
 export const MAX_UINT256 = 2n ** 256n - 1n;
 
-// 0.1 USDFC in wei (used for proof set creation fee)
-export const PROOF_SET_CREATION_FEE = BigInt(0.1 * 10 ** 18);
+// 0.1 USDFC in wei (used for dataset creation fee)
+export const DATA_SET_CREATION_FEE = BigInt(0.1 * 10 ** 18);
