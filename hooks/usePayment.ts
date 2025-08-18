@@ -4,12 +4,7 @@ import { useState } from "react";
 import { useConfetti } from "@/hooks/useConfetti";
 import { useNetwork } from "@/hooks/useNetwork";
 import { Synapse, TOKENS, CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
-import {
-  getFilecoinWarmStorageServiceAddress,
-  DATA_SET_CREATION_FEE,
-  MAX_UINT256,
-  getDataset,
-} from "@/utils";
+import { DATA_SET_CREATION_FEE, MAX_UINT256, getDataset } from "@/utils";
 import { useAccount } from "wagmi";
 
 /**
@@ -48,7 +43,7 @@ export const usePayment = () => {
         disableNonceManager: false,
       });
 
-      const { dataset } = await getDataset(signer, network, address);
+      const { dataset } = await getDataset(synapse, address);
 
       const hasDataset = !!dataset;
 
@@ -88,7 +83,7 @@ export const usePayment = () => {
         "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
       );
       const transaction = await synapse.payments.approveService(
-        getFilecoinWarmStorageServiceAddress(network),
+        synapse.getPandoraAddress(),
         epochRateAllowance,
         lockupAllowance + fee
       );

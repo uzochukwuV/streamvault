@@ -1,9 +1,5 @@
-import { getFilecoinWarmStorageServiceAddress } from "@/utils";
 import { Synapse } from "@filoz/synapse-sdk";
-import {
-  PandoraService as FilecoinWarmStorageService,
-  CONTRACT_ADDRESSES,
-} from "@filoz/synapse-sdk";
+import { PandoraService as FilecoinWarmStorageService } from "@filoz/synapse-sdk";
 import { config } from "@/config";
 import { ethers } from "ethers";
 import { checkAllowances } from "./filecoinWarmStorageUtils";
@@ -25,20 +21,16 @@ import { checkAllowances } from "./filecoinWarmStorageUtils";
 export const preflightCheck = async (
   file: File,
   synapse: Synapse,
-  network: "mainnet" | "calibration",
   includeDataSetCreationFee: boolean,
   updateStatus: (status: string) => void,
   updateProgress: (progress: number) => void
 ) => {
   // Verify signer and provider are available
-  const signer = synapse.getSigner();
-  if (!signer) throw new Error("Signer not found");
-  if (!signer.provider) throw new Error("Provider not found");
-
   // Initialize Pandora service for allowance checks
   const filecoinWarmStorageService = new FilecoinWarmStorageService(
-    signer.provider,
-    CONTRACT_ADDRESSES.PANDORA_SERVICE[network]
+    synapse.getProvider(),
+    synapse.getPandoraAddress(),
+    synapse.getPDPVerifierAddress()
   );
 
   // Step 1: Check if current allowance is sufficient for the file size
@@ -95,7 +87,7 @@ export const preflightCheck = async (
       "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
     );
     const approvalTx = await synapse.payments.approveService(
-      getFilecoinWarmStorageServiceAddress(network),
+      synapse.getPandoraAddress(),
       rateAllowanceNeeded,
       lockupAllowanceNeeded
     );

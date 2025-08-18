@@ -1,19 +1,15 @@
-import {
-  CONTRACT_ADDRESSES,
-  PandoraService as FilecoinWarmStorageService,
-} from "@filoz/synapse-sdk";
-import { JsonRpcSigner } from "ethers";
 import { config } from "@/config";
+import {
+  PandoraService as FilecoinWarmStorageService,
+  Synapse,
+} from "@filoz/synapse-sdk";
 
 // Returns the providerId and the dataset with the most used storage for the client
-export const getDataset = async (
-  signer: JsonRpcSigner,
-  network: "mainnet" | "calibration",
-  address: string
-) => {
+export const getDataset = async (synapse: Synapse, address: string) => {
   const filecoinWarmStorageService = new FilecoinWarmStorageService(
-    signer.provider,
-    CONTRACT_ADDRESSES.PANDORA_SERVICE[network]
+    synapse.getProvider(),
+    synapse.getPandoraAddress(),
+    synapse.getPDPVerifierAddress()
   );
   let providerId;
   let mostUtilizedDataset;

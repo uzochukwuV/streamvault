@@ -52,7 +52,7 @@ export const useFileUpload = () => {
       });
 
       // 4) Get dataset
-      const { providerId } = await getDataset(signer, network, address);
+      const { providerId } = await getDataset(synapse, address);
       // 5) Check if we have a dataset
       const datasetExists = !!providerId;
       // Include proofset creation fee if no proofset exists
@@ -64,7 +64,6 @@ export const useFileUpload = () => {
       await preflightCheck(
         file,
         synapse,
-        network,
         includeDatasetCreationFee,
         setStatus,
         setProgress

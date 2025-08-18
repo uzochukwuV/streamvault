@@ -18,7 +18,8 @@ export const fetchFilecoinWarmStorageStorageCosts = async (
 ): Promise<StorageCosts> => {
   const filecoinWarmStorageService = new FilecoinWarmStorageService(
     synapse.getProvider(),
-    synapse.getPandoraAddress()
+    synapse.getPandoraAddress(),
+    synapse.getPDPVerifierAddress()
   );
   return filecoinWarmStorageService.getServicePrice();
 };
@@ -37,7 +38,8 @@ export const fetchFilecoinWarmStorageBalanceData = async (
 ): Promise<FilecoinWarmStorageBalance> => {
   const filecoinWarmStorageService = new FilecoinWarmStorageService(
     synapse.getProvider(),
-    synapse.getPandoraAddress()
+    synapse.getPandoraAddress(),
+    synapse.getPDPVerifierAddress()
   );
   return filecoinWarmStorageService.checkAllowanceForStorage(
     storageCapacityBytes,

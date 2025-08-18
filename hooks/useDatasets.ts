@@ -2,8 +2,8 @@ import { PandoraService as FilecoinWarmStorageService } from "@filoz/synapse-sdk
 import { useEthersSigner } from "@/hooks/useEthers";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CONTRACT_ADDRESSES,
   EnhancedProofSetInfo as EnhancedDatasetInfo,
+  Synapse,
 } from "@filoz/synapse-sdk";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useAccount } from "wagmi";
@@ -62,10 +62,16 @@ export const useDatasets = () => {
       if (!signer) throw new Error("Signer not found");
       if (!address) throw new Error("Address not found");
 
+      const synapse = await Synapse.create({
+        signer,
+        disableNonceManager: false,
+      });
+
       // Initialize Pandora service
       const filecoinWarmStorageService = new FilecoinWarmStorageService(
-        signer.provider,
-        CONTRACT_ADDRESSES.PANDORA_SERVICE[network]
+        synapse.getProvider(),
+        synapse.getPandoraAddress(),
+        synapse.getPDPVerifierAddress()
       );
 
       // Fetch providers and datasets in parallel
