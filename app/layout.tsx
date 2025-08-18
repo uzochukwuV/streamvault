@@ -12,6 +12,7 @@ import { Navbar } from "@/components/ui/Navbar";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { ConfettiProvider } from "@/providers/ConfettiProvider";
 import Footer from "@/components/ui/Footer";
+import { GeolocationProvider } from "@/providers/GeolocationProvider";
 
 const queryClient = new QueryClient();
 
@@ -46,24 +47,30 @@ export default function RootLayout({
         <link rel="icon" href="/filecoin.svg" />
       </head>
       <body>
-        <ThemeProvider>
-          <ConfettiProvider>
-            <QueryClientProvider client={queryClient}>
-              <WagmiProvider config={config}>
-                <RainbowKitProvider
-                  modalSize="compact"
-                  initialChain={filecoinCalibration.id}
-                >
-                  <main className="flex flex-col min-h-screen">
-                    <Navbar />
-                    {children}
-                  </main>
-                  <Footer />
-                </RainbowKitProvider>
-              </WagmiProvider>
-            </QueryClientProvider>
-          </ConfettiProvider>
-        </ThemeProvider>
+        <GeolocationProvider
+          onBlocked={(info: any) => {
+            console.log("blocked", info);
+          }}
+        >
+          <ThemeProvider>
+            <ConfettiProvider>
+              <QueryClientProvider client={queryClient}>
+                <WagmiProvider config={config}>
+                  <RainbowKitProvider
+                    modalSize="compact"
+                    initialChain={filecoinCalibration.id}
+                  >
+                    <main className="flex flex-col min-h-screen">
+                      <Navbar />
+                      {children}
+                    </main>
+                    <Footer />
+                  </RainbowKitProvider>
+                </WagmiProvider>
+              </QueryClientProvider>
+            </ConfettiProvider>
+          </ThemeProvider>
+        </GeolocationProvider>
       </body>
     </html>
   );
