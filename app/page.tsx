@@ -1,18 +1,18 @@
 "use client";
-import { StorageManager } from "../components/StorageManager";
+import { StorageManager } from "@/components/StorageManager";
 import { useAccount } from "wagmi";
 import { useState } from "react";
 import { FileUploader } from "../components/FileUploader";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "@/components/ui/Confetti";
 import { useConfetti } from "@/hooks/useConfetti";
-import { ViewProofSets } from "@/components/ViewProofSets";
+import { DatasetsViewer } from "@/components/DatasetsViewer";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useBalances } from "@/hooks/useBalances";
 import Github from "@/components/ui/icons/Github";
 import Filecoin from "@/components/ui/icons/Filecoin";
 
-type Tab = "manage-storage" | "upload" | "proof-set";
+type Tab = "manage-storage" | "upload" | "dataset";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -107,10 +107,12 @@ export default function Home() {
           >
             USDFC
           </motion.a>
-          your balance:
-          {isLoadingBalances || !isConnected
-            ? "..."
-            : balances?.usdfcBalanceFormatted.toFixed(1) + " $"}
+          your balance is
+          <span className="font-bold">
+            {isLoadingBalances || !isConnected
+              ? "..."
+              : balances?.usdfcBalanceFormatted.toFixed(1) + "$"}
+          </span>
         </motion.p>
         {chainId !== 314159 && (
           <motion.p
@@ -182,14 +184,14 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveTab("proof-set")}
+                  onClick={() => setActiveTab("dataset")}
                   className={`flex-1 py-2 px-4 text-center border-b-2 transition-colors ${
-                    activeTab === "proof-set"
+                    activeTab === "dataset"
                       ? "border-primary text-primary-foreground bg-primary"
                       : "border-transparent text-secondary hover:text-primary hover:bg-secondary/10"
                   }`}
                 >
-                  View Proof Sets
+                  View Datasets
                 </motion.button>
               </motion.div>
 
@@ -222,9 +224,9 @@ export default function Home() {
                     <FileUploader />
                   </motion.div>
                 ) : (
-                  activeTab === "proof-set" && (
+                  activeTab === "dataset" && (
                     <motion.div
-                      key="proof-set"
+                      key="dataset"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
@@ -234,7 +236,7 @@ export default function Home() {
                         damping: 20,
                       }}
                     >
-                      <ViewProofSets />
+                      <DatasetsViewer />
                     </motion.div>
                   )
                 )}

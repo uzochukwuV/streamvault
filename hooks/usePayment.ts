@@ -4,12 +4,7 @@ import { useState } from "react";
 import { useConfetti } from "@/hooks/useConfetti";
 import { useNetwork } from "@/hooks/useNetwork";
 import { Synapse, TOKENS, CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
-import {
-  getPandoraServiceAddress,
-  PROOF_SET_CREATION_FEE,
-  MAX_UINT256,
-  getProofset,
-} from "@/utils";
+import { DATA_SET_CREATION_FEE, MAX_UINT256, getDataset } from "@/utils";
 import { useAccount } from "wagmi";
 
 /**
@@ -48,11 +43,11 @@ export const usePayment = () => {
         disableNonceManager: false,
       });
 
-      const { proofset } = await getProofset(signer, network, address);
+      const { dataset } = await getDataset(synapse, address);
 
-      const hasProofSet = !!proofset;
+      const hasDataset = !!dataset;
 
-      const fee = hasProofSet ? 0n : PROOF_SET_CREATION_FEE;
+      const fee = hasDataset ? 0n : DATA_SET_CREATION_FEE;
 
       const amount = depositAmount + fee;
 
@@ -84,14 +79,18 @@ export const usePayment = () => {
         setStatus("💰 Successfully deposited USDFC to cover storage costs");
       }
 
-      setStatus("💰 Approving Pandora service USDFC spending rates...");
+      setStatus(
+        "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
+      );
       const transaction = await synapse.payments.approveService(
-        getPandoraServiceAddress(network),
+        synapse.getPandoraAddress(),
         epochRateAllowance,
         lockupAllowance + fee
       );
       await transaction.wait();
-      setStatus("💰 Successfully approved Pandora spending rates");
+      setStatus(
+        "💰 Successfully approved Filecoin Warm Storage spending rates"
+      );
     },
     onSuccess: () => {
       setStatus("✅ Payment was successful!");

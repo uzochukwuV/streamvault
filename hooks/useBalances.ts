@@ -39,10 +39,13 @@ export const useBalances = () => {
       return {
         filBalance: filRaw,
         usdfcBalance: usdfcRaw,
-        pandoraBalance: paymentsRaw,
+        filecoinWarmStorageBalance: paymentsRaw,
         filBalanceFormatted: formatBalance(filRaw, 18),
         usdfcBalanceFormatted: formatBalance(usdfcRaw, usdfcDecimals),
-        pandoraBalanceFormatted: formatBalance(paymentsRaw, usdfcDecimals),
+        filecoinWarmStorageBalanceFormatted: formatBalance(
+          paymentsRaw,
+          usdfcDecimals
+        ),
         ...storageMetrics,
       };
     },

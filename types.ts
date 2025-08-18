@@ -1,8 +1,9 @@
-export interface Root {
+export interface Piece {
+  // TODO: rename to piece
   rootId: number;
   rootCid: string;
-  subrootCid: string;
-  subrootOffset: number;
+  subRootCid: string;
+  subRootOffset: number;
 }
 
 export interface Provider {
@@ -10,14 +11,15 @@ export interface Provider {
   pdpUrl: string;
 }
 
-export interface ProofSetDetails {
+export interface DatasetDetails {
   id: number;
-  roots: Root[];
+  // TODO: rename to pieces
+  roots: Piece[];
   nextChallengeEpoch: number;
   pdpUrl: string;
 }
 
-export interface ProofSet {
+export interface DataSet {
   railId: number;
   payer: string;
   payee: string;
@@ -31,13 +33,13 @@ export interface ProofSet {
   currentRootCount: number;
   isLive: boolean;
   isManaged: boolean;
-  details: ProofSetDetails | null;
+  details: DatasetDetails | null;
   pdpUrl: string | null;
   provider: Provider | null;
 }
 
-export interface ProofSetsResponse {
-  proofsets: ProofSet[];
+export interface DatasetsResponse {
+  datasets: DataSet[];
 }
 
 /**
@@ -46,10 +48,10 @@ export interface ProofSetsResponse {
 export interface UseBalancesResponse {
   filBalance: bigint;
   usdfcBalance: bigint;
-  pandoraBalance: bigint;
+  filecoinWarmStorageBalance: bigint;
   filBalanceFormatted: number;
   usdfcBalanceFormatted: number;
-  pandoraBalanceFormatted: number;
+  filecoinWarmStorageBalanceFormatted: number;
   persistenceDaysLeft: number;
   persistenceDaysLeftAtCurrentRate: number;
   isSufficient: boolean;
@@ -66,10 +68,10 @@ export interface UseBalancesResponse {
 export const defaultBalances: UseBalancesResponse = {
   filBalance: 0n,
   usdfcBalance: 0n,
-  pandoraBalance: 0n,
+  filecoinWarmStorageBalance: 0n,
   filBalanceFormatted: 0,
   usdfcBalanceFormatted: 0,
-  pandoraBalanceFormatted: 0,
+  filecoinWarmStorageBalanceFormatted: 0,
   persistenceDaysLeft: 0,
   persistenceDaysLeftAtCurrentRate: 0,
   isSufficient: false,
@@ -86,7 +88,7 @@ export const defaultBalances: UseBalancesResponse = {
 /**
  * Interface representing the Pandora balance data returned from the SDK
  */
-export interface PandoraBalanceData {
+export interface FilecoinWarmStorageBalance {
   rateAllowanceNeeded: bigint;
   lockupAllowanceNeeded: bigint;
   currentRateAllowance: bigint;

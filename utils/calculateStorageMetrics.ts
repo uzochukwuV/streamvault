@@ -3,13 +3,13 @@ import { config } from "@/config";
 import { StorageCalculationResult } from "@/types";
 import { calculateRateAllowanceGB } from "@/utils/storageCostUtils";
 import {
-  fetchPandoraStorageCosts,
-  fetchPandoraBalanceData,
   calculateCurrentStorageUsage,
-} from "@/utils/pandoraUtils";
+  fetchFilecoinWarmStorageStorageCosts,
+  fetchFilecoinWarmStorageBalanceData,
+} from "@/utils/filecoinWarmStorageUtils";
 
 /**
- * Calculates storage metrics for Pandora service based on balance data and user config.
+ * Calculates storage metrics for FilecoinWarmStorage service based on balance data and user config.
  * Fetches costs and balances, then computes all relevant metrics for storage and allowance sufficiency.
  *
  * @param synapse - The Synapse instance
@@ -25,25 +25,26 @@ export const calculateStorageMetrics = async (
     Number(SIZE_CONSTANTS.GiB),
   minDaysThreshold: number = config.minDaysThreshold
 ): Promise<StorageCalculationResult> => {
-  // Fetch storage costs and balance data from Pandora
-  const storageCosts = await fetchPandoraStorageCosts(synapse);
-  const pandoraBalance = await fetchPandoraBalanceData(
+  // Fetch storage costs and balance data from FilecoinWarmStorage service
+  const storageCosts = await fetchFilecoinWarmStorageStorageCosts(synapse);
+  const filecoinWarmStorageBalance = await fetchFilecoinWarmStorageBalanceData(
     synapse,
     storageCapacityBytes,
     persistencePeriodDays
   );
 
   // Calculate the rate needed per epoch for the requested storage
-  const rateNeeded = pandoraBalance.costs.perEpoch;
+  const rateNeeded = filecoinWarmStorageBalance.costs.perEpoch;
 
   // Calculate daily lockup requirements at requested and current rates
   const lockupPerDay = TIME_CONSTANTS.EPOCHS_PER_DAY * rateNeeded;
   const lockupPerDayAtCurrentRate =
-    TIME_CONSTANTS.EPOCHS_PER_DAY * pandoraBalance.currentRateUsed;
+    TIME_CONSTANTS.EPOCHS_PER_DAY * filecoinWarmStorageBalance.currentRateUsed;
 
   // Calculate remaining lockup and persistence days
   const currentLockupRemaining =
-    pandoraBalance.currentLockupAllowance - pandoraBalance.currentLockupUsed;
+    filecoinWarmStorageBalance.currentLockupAllowance -
+    filecoinWarmStorageBalance.currentLockupUsed;
   // How many days of storage remain at requested rate
   const persistenceDaysLeft =
     Number(currentLockupRemaining) / Number(lockupPerDay);
@@ -57,10 +58,14 @@ export const calculateStorageMetrics = async (
 
   // Calculate current storage usage (in bytes and GB)
   const { currentStorageBytes, currentStorageGB } =
-    calculateCurrentStorageUsage(pandoraBalance, storageCapacityBytes);
+    calculateCurrentStorageUsage(
+      filecoinWarmStorageBalance,
+      storageCapacityBytes
+    );
 
   // Determine sufficiency of allowances
-  const isRateSufficient = pandoraBalance.currentRateAllowance >= rateNeeded;
+  const isRateSufficient =
+    filecoinWarmStorageBalance.currentRateAllowance >= rateNeeded;
   // Lockup is sufficient if enough days remain
   const isLockupSufficient = persistenceDaysLeft >= minDaysThreshold;
   // Both must be sufficient
@@ -68,18 +73,18 @@ export const calculateStorageMetrics = async (
 
   // Calculate how much storage (in GB) the current rate allowance supports
   const currentRateAllowanceGB = calculateRateAllowanceGB(
-    pandoraBalance.currentRateAllowance,
+    filecoinWarmStorageBalance.currentRateAllowance,
     storageCosts
   );
   // Amount of deposit needed for storage
-  const depositNeeded = pandoraBalance.depositAmountNeeded;
+  const depositNeeded = filecoinWarmStorageBalance.depositAmountNeeded;
 
   return {
     rateNeeded, // rate needed per epoch for requested storage
-    rateUsed: pandoraBalance.currentRateUsed, // rate currently used
+    rateUsed: filecoinWarmStorageBalance.currentRateUsed, // rate currently used
     currentStorageBytes, // current storage used in bytes
     currentStorageGB, // current storage used in GB
-    totalLockupNeeded: pandoraBalance.lockupAllowanceNeeded, // total lockup needed
+    totalLockupNeeded: filecoinWarmStorageBalance.lockupAllowanceNeeded, // total lockup needed
     depositNeeded, // deposit needed for storage
     persistenceDaysLeft, // days of storage left at requested rate
     persistenceDaysLeftAtCurrentRate, // days of storage left at current rate
@@ -87,6 +92,6 @@ export const calculateStorageMetrics = async (
     isLockupSufficient, // is the lockup allowance sufficient?
     isSufficient, // are both sufficient?
     currentRateAllowanceGB, // how much storage (GB) current rate allowance supports
-    currentLockupAllowance: pandoraBalance.currentLockupAllowance, // current lockup allowance
+    currentLockupAllowance: filecoinWarmStorageBalance.currentLockupAllowance, // current lockup allowance
   };
 };

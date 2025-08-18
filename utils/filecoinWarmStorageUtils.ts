@@ -1,45 +1,47 @@
 import {
-  PandoraService,
+  PandoraService as FilecoinWarmStorageService,
   SIZE_CONSTANTS,
   Synapse,
   TIME_CONSTANTS,
 } from "@filoz/synapse-sdk";
 import { config } from "@/config";
-import { PandoraBalanceData, StorageCosts } from "@/types";
-import { PROOF_SET_CREATION_FEE } from "./constants";
+import { FilecoinWarmStorageBalance, StorageCosts } from "@/types";
+import { DATA_SET_CREATION_FEE } from "./constants";
 
 /**
- * Fetches the current storage costs from the Pandora service.
+ * Fetches the current storage costs from the FilecoinWarmStorage service.
  * @param synapse - The Synapse instance
  * @returns The storage costs object
  */
-export const fetchPandoraStorageCosts = async (
+export const fetchFilecoinWarmStorageStorageCosts = async (
   synapse: Synapse
 ): Promise<StorageCosts> => {
-  const pandoraService = new PandoraService(
+  const filecoinWarmStorageService = new FilecoinWarmStorageService(
     synapse.getProvider(),
-    synapse.getPandoraAddress()
+    synapse.getPandoraAddress(),
+    synapse.getPDPVerifierAddress()
   );
-  return pandoraService.getServicePrice();
+  return filecoinWarmStorageService.getServicePrice();
 };
 
 /**
- * Fetches the current Pandora balance data for a given storage capacity (in bytes) and period (in days).
+ * Fetches the current FilecoinWarmStorage balance data for a given storage capacity (in bytes) and period (in days).
  * @param synapse - The Synapse instance
  * @param storageCapacityBytes - Storage capacity in bytes
  * @param persistencePeriodDays - Desired persistence period in days
- * @returns The Pandora balance data object
+ * @returns The FilecoinWarmStorage balance data object
  */
-export const fetchPandoraBalanceData = async (
+export const fetchFilecoinWarmStorageBalanceData = async (
   synapse: Synapse,
   storageCapacityBytes: number,
   persistencePeriodDays: number
-): Promise<PandoraBalanceData> => {
-  const pandoraService = new PandoraService(
+): Promise<FilecoinWarmStorageBalance> => {
+  const filecoinWarmStorageService = new FilecoinWarmStorageService(
     synapse.getProvider(),
-    synapse.getPandoraAddress()
+    synapse.getPandoraAddress(),
+    synapse.getPDPVerifierAddress()
   );
-  return pandoraService.checkAllowanceForStorage(
+  return filecoinWarmStorageService.checkAllowanceForStorage(
     storageCapacityBytes,
     config.withCDN,
     synapse.payments,
@@ -50,12 +52,12 @@ export const fetchPandoraBalanceData = async (
 /**
  * Calculates current storage usage based on rate usage and storage capacity.
  *
- * @param pandoraBalance - The Pandora balance data
+ * @param pandoraBalance - The FilecoinWarmStorage balance data
  * @param storageCapacityBytes - The storage capacity in bytes
  * @returns Object with currentStorageBytes and currentStorageGB
  */
 export const calculateCurrentStorageUsage = (
-  pandoraBalance: PandoraBalanceData,
+  pandoraBalance: FilecoinWarmStorageBalance,
   storageCapacityBytes: number
 ): { currentStorageBytes: bigint; currentStorageGB: number } => {
   let currentStorageBytes = 0n;
@@ -82,49 +84,51 @@ export const calculateCurrentStorageUsage = (
 };
 
 /**
- * Checks if the current allowances and balances are sufficient for storage and proofset creation.
+ * Checks if the current allowances and balances are sufficient for storage and dataset creation.
  *
- * @param pandoraBalance - The Pandora balance data
+ * @param filecoinWarmStorageBalance - The FilecoinWarmStorage balance data
  * @param minDaysThreshold - Minimum days threshold for lockup sufficiency
- * @param includeProofsetCreationFee - Whether to include the proofset creation fee in calculations
+ * @param includeDataSetCreationFee - Whether to include the dataset creation fee in calculations
  * @returns Object with sufficiency flags and allowance details
  */
 export const checkAllowances = async (
-  pandoraBalance: PandoraBalanceData,
+  filecoinWarmStorageBalance: FilecoinWarmStorageBalance,
   minDaysThreshold: number,
-  includeProofsetCreationFee: boolean
+  includeDataSetCreationFee: boolean
 ) => {
   // Calculate the rate needed per epoch
-  const rateNeeded = pandoraBalance.costs.perEpoch;
+  const rateNeeded = filecoinWarmStorageBalance.costs.perEpoch;
 
   // Calculate daily lockup requirements
   const lockupPerDay = TIME_CONSTANTS.EPOCHS_PER_DAY * rateNeeded;
 
   // Calculate remaining lockup and persistence days
   const currentLockupRemaining =
-    pandoraBalance.currentLockupAllowance - pandoraBalance.currentLockupUsed;
+    filecoinWarmStorageBalance.currentLockupAllowance -
+    filecoinWarmStorageBalance.currentLockupUsed;
 
-  // Calculate total allowance needed including proofset creation fee if required
-  const proofSetCreationFee = includeProofsetCreationFee
-    ? PROOF_SET_CREATION_FEE
+  // Calculate total allowance needed including dataset creation fee if required
+  const dataSetCreationFee = includeDataSetCreationFee
+    ? DATA_SET_CREATION_FEE
     : BigInt(0);
 
   // Use available properties for lockup and deposit
-  const totalLockupNeeded = pandoraBalance.lockupAllowanceNeeded;
-  const depositNeeded = pandoraBalance.depositAmountNeeded;
+  const totalLockupNeeded = filecoinWarmStorageBalance.lockupAllowanceNeeded;
+  const depositNeeded = filecoinWarmStorageBalance.depositAmountNeeded;
 
   // Use the greater of current or needed rate allowance
   const rateAllowanceNeeded =
-    pandoraBalance.currentRateAllowance > pandoraBalance.rateAllowanceNeeded
-      ? pandoraBalance.currentRateAllowance
-      : pandoraBalance.rateAllowanceNeeded;
+    filecoinWarmStorageBalance.currentRateAllowance >
+    filecoinWarmStorageBalance.rateAllowanceNeeded
+      ? filecoinWarmStorageBalance.currentRateAllowance
+      : filecoinWarmStorageBalance.rateAllowanceNeeded;
 
-  // Add proofset creation fee to lockup and deposit if needed
-  const lockupAllowanceNeeded = totalLockupNeeded + proofSetCreationFee;
-  const depositAmountNeeded = depositNeeded + proofSetCreationFee;
+  // Add dataset creation fee to lockup and deposit if needed
+  const lockupAllowanceNeeded = totalLockupNeeded + dataSetCreationFee;
+  const depositAmountNeeded = depositNeeded + dataSetCreationFee;
 
-  // Check if lockup balance is sufficient for proofset creation
-  const isLockupBalanceSufficientForProofsetCreation =
+  // Check if lockup balance is sufficient for dataset creation
+  const isLockupBalanceSufficientForDataSetCreation =
     currentLockupRemaining >= lockupAllowanceNeeded;
 
   // Calculate how many days of persistence are left
@@ -133,11 +137,11 @@ export const checkAllowances = async (
 
   // Determine sufficiency of allowances
   const isRateSufficient =
-    pandoraBalance.currentRateAllowance >= rateAllowanceNeeded;
-  // Lockup is sufficient if enough days remain and enough for proofset creation
+    filecoinWarmStorageBalance.currentRateAllowance >= rateAllowanceNeeded;
+  // Lockup is sufficient if enough days remain and enough for dataset creation
   const isLockupSufficient =
     persistenceDaysLeft >= Number(minDaysThreshold) &&
-    isLockupBalanceSufficientForProofsetCreation;
+    isLockupBalanceSufficientForDataSetCreation;
   // Both must be sufficient
   const isSufficient = isRateSufficient && isLockupSufficient;
 
