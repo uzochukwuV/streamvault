@@ -3,7 +3,6 @@ import { Synapse, TOKENS } from "@filoz/synapse-sdk";
 import { useEthersProvider } from "@/hooks/useEthers";
 import { useAccount } from "wagmi";
 import { calculateStorageMetrics } from "@/utils/calculateStorageMetrics";
-import { useNetwork } from "@/hooks/useNetwork";
 import { formatUnits } from "viem";
 import { defaultBalances, UseBalancesResponse } from "@/types";
 
@@ -13,14 +12,12 @@ import { defaultBalances, UseBalancesResponse } from "@/types";
 export const useBalances = () => {
   const provider = useEthersProvider();
   const { address } = useAccount();
-  const { data: network } = useNetwork();
 
   const query = useQuery({
-    enabled: !!address && !!provider && !!network,
-    queryKey: ["balances", address, network],
+    enabled: !!address && !!provider,
+    queryKey: ["balances", address],
     queryFn: async (): Promise<UseBalancesResponse> => {
       if (!provider) throw new Error("Provider not found");
-      if (!network) throw new Error("Network not found");
 
       const synapse = await Synapse.create({ provider });
 
@@ -39,13 +36,10 @@ export const useBalances = () => {
       return {
         filBalance: filRaw,
         usdfcBalance: usdfcRaw,
-        filecoinWarmStorageBalance: paymentsRaw,
+        warmStorageBalance: paymentsRaw,
         filBalanceFormatted: formatBalance(filRaw, 18),
         usdfcBalanceFormatted: formatBalance(usdfcRaw, usdfcDecimals),
-        filecoinWarmStorageBalanceFormatted: formatBalance(
-          paymentsRaw,
-          usdfcDecimals
-        ),
+        warmStorageBalanceFormatted: formatBalance(paymentsRaw, usdfcDecimals),
         ...storageMetrics,
       };
     },

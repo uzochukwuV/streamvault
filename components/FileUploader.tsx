@@ -11,7 +11,8 @@ export const FileUploader = () => {
   const { uploadFileMutation, uploadedInfo, handleReset, status, progress } =
     useFileUpload();
 
-  const { isPending: isLoading, mutateAsync: uploadFile } = uploadFileMutation;
+  const { isPending: isUploading, mutateAsync: uploadFile } =
+    uploadFileMutation;
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -48,16 +49,21 @@ export const FileUploader = () => {
   return (
     <div className="mt-4 p-6">
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           isDragging
             ? "border-blue-500 bg-blue-50"
             : "border-gray-300 hover:border-gray-400"
+        } ${
+          isUploading ? "cursor-not-allowed text-gray-400" : "cursor-pointer"
         }`}
         onDragEnter={handleDragIn}
         onDragLeave={handleDragOut}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => document.getElementById("fileInput")?.click()}
+        onClick={() => {
+          if (isUploading) return;
+          document.getElementById("fileInput")?.click();
+        }}
       >
         <input
           id="fileInput"
@@ -70,7 +76,9 @@ export const FileUploader = () => {
         />
         <div className="flex flex-col items-center gap-2">
           <svg
-            className={`w-10 h-10 ${isDragging ? "text-blue-500" : "text-gray-400"}`}
+            className={`w-10 h-10 ${
+              isDragging ? "text-blue-500" : "text-gray-400"
+            }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -99,28 +107,32 @@ export const FileUploader = () => {
             if (!file) return;
             await uploadFile(file);
           }}
-          disabled={!file || isLoading || !!uploadedInfo}
-          aria-disabled={!file || isLoading}
+          disabled={!file || isUploading || !!uploadedInfo}
+          aria-disabled={!file || isUploading}
           className={`px-6 py-2 rounded-[20px] text-center border-2 transition-all
             ${
-              !file || isLoading || uploadedInfo
+              !file || isUploading || uploadedInfo
                 ? "border-gray-200 text-gray-400 cursor-not-allowed"
                 : "border-secondary text-secondary hover:bg-secondary/70 hover:text-secondary-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 hover:border-secondary/70 hover:cursor-pointer"
             }
           `}
         >
-          {isLoading ? "Uploading..." : !uploadedInfo ? "Submit" : "Submitted"}
+          {isUploading
+            ? "Uploading..."
+            : !uploadedInfo
+            ? "Submit"
+            : "Submitted"}
         </button>
         <button
           onClick={() => {
             handleReset();
             setFile(null);
           }}
-          disabled={!file || isLoading}
-          aria-disabled={!file || isLoading}
+          disabled={!file || isUploading}
+          aria-disabled={!file || isUploading}
           className={`px-6 py-2 rounded-[20px] text-center border-2 transition-all
             ${
-              !file || isLoading
+              !file || isUploading
                 ? "border-gray-200 text-gray-400 cursor-not-allowed"
                 : "border-secondary text-secondary hover:bg-secondary/70 hover:text-secondary-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 hover:border-secondary/70 hover:cursor-pointer"
             }
@@ -137,14 +149,14 @@ export const FileUploader = () => {
                 status.includes("❌")
                   ? "text-red-500"
                   : status.includes("✅") || status.includes("🎉")
-                    ? "text-green-500"
-                    : "text-secondary"
+                  ? "text-green-500"
+                  : "text-secondary"
               }
             `}
           >
             {status}
           </p>
-          {isLoading && (
+          {isUploading && (
             <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2 ">
               <div
                 className="bg-green-500 h-2.5 rounded-full transition-all duration-500"
@@ -155,7 +167,7 @@ export const FileUploader = () => {
         </div>
       )}
       {/* Uploaded file info panel */}
-      {uploadedInfo && !isLoading && (
+      {uploadedInfo && !isUploading && (
         <div className="mt-6 bg-background border border-border rounded-xl p-4 text-left">
           <h4 className="font-semibold mb-2 text-foreground">
             File Upload Details
@@ -170,7 +182,8 @@ export const FileUploader = () => {
               {uploadedInfo.fileSize?.toLocaleString() || "N/A"} bytes
             </div>
             <div className="break-all">
-              <span className="font-medium">CommP:</span> {uploadedInfo.commp}
+              <span className="font-medium">Piece CID:</span>{" "}
+              {uploadedInfo.pieceCid}
             </div>
             <div className="break-all">
               <span className="font-medium">Tx Hash:</span>{" "}

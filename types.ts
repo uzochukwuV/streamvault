@@ -1,41 +1,12 @@
-export interface Piece {
-  // TODO: rename to piece
-  rootId: number;
-  rootCid: string;
-  subRootCid: string;
-  subRootOffset: number;
-}
+import {
+  EnhancedDataSetInfo,
+  DataSetData,
+  ApprovedProviderInfo,
+} from "@filoz/synapse-sdk";
 
-export interface Provider {
-  owner: string;
-  pdpUrl: string;
-}
-
-export interface DatasetDetails {
-  id: number;
-  // TODO: rename to pieces
-  roots: Piece[];
-  nextChallengeEpoch: number;
-  pdpUrl: string;
-}
-
-export interface DataSet {
-  railId: number;
-  payer: string;
-  payee: string;
-  commissionBps: number;
-  metadata: string;
-  rootMetadata: any[];
-  clientDataSetId: number;
-  withCDN: boolean;
-  pdpVerifierProofSetId: number;
-  nextRootId: number;
-  currentRootCount: number;
-  isLive: boolean;
-  isManaged: boolean;
-  details: DatasetDetails | null;
-  pdpUrl: string | null;
-  provider: Provider | null;
+export interface DataSet extends EnhancedDataSetInfo {
+  data: DataSetData | null;
+  provider: ApprovedProviderInfo | null;
 }
 
 export interface DatasetsResponse {
@@ -48,10 +19,10 @@ export interface DatasetsResponse {
 export interface UseBalancesResponse {
   filBalance: bigint;
   usdfcBalance: bigint;
-  filecoinWarmStorageBalance: bigint;
+  warmStorageBalance: bigint;
   filBalanceFormatted: number;
   usdfcBalanceFormatted: number;
-  filecoinWarmStorageBalanceFormatted: number;
+  warmStorageBalanceFormatted: number;
   persistenceDaysLeft: number;
   persistenceDaysLeftAtCurrentRate: number;
   isSufficient: boolean;
@@ -68,10 +39,10 @@ export interface UseBalancesResponse {
 export const defaultBalances: UseBalancesResponse = {
   filBalance: 0n,
   usdfcBalance: 0n,
-  filecoinWarmStorageBalance: 0n,
+  warmStorageBalance: 0n,
   filBalanceFormatted: 0,
   usdfcBalanceFormatted: 0,
-  filecoinWarmStorageBalanceFormatted: 0,
+  warmStorageBalanceFormatted: 0,
   persistenceDaysLeft: 0,
   persistenceDaysLeftAtCurrentRate: 0,
   isSufficient: false,
@@ -88,7 +59,7 @@ export const defaultBalances: UseBalancesResponse = {
 /**
  * Interface representing the Pandora balance data returned from the SDK
  */
-export interface FilecoinWarmStorageBalance {
+export interface WarmStorageBalance {
   rateAllowanceNeeded: bigint;
   lockupAllowanceNeeded: bigint;
   currentRateAllowance: bigint;

@@ -83,8 +83,6 @@ export const GeolocationProvider = ({
 
       const location = await getLocationFromIP();
 
-      console.log("location", location);
-
       let isBlocked = false;
       let blockReason: string | null = "";
 

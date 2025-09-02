@@ -1,49 +1,9 @@
-import { PandoraService as FilecoinWarmStorageService } from "@filoz/synapse-sdk/pandora";
+import { WarmStorageService } from "@filoz/synapse-sdk/warm-storage";
 import { useEthersSigner } from "@/hooks/useEthers";
 import { useQuery } from "@tanstack/react-query";
-import {
-  EnhancedProofSetInfo as EnhancedDatasetInfo,
-  Synapse,
-} from "@filoz/synapse-sdk";
-import { useNetwork } from "@/hooks/useNetwork";
+import { EnhancedDataSetInfo, Synapse, PDPServer } from "@filoz/synapse-sdk";
 import { useAccount } from "wagmi";
-import { DatasetsResponse, DatasetDetails, Provider, DataSet } from "@/types";
-
-/**
- * Fetches dataset details from a provider's API
- * @param datasetId - The ID of the dataset
- * @param pdpUrl - The URL of the provider's API
- * @returns Promise resolving to the dataset details or null if not found
- */
-const fetchDatasetDetails = async (
-  datasetId: number,
-  pdpUrl: string
-): Promise<DatasetDetails | null> => {
-  try {
-    if (!pdpUrl.endsWith("/")) {
-      pdpUrl = `${pdpUrl}/`;
-    }
-    // TODO: rename to datasets
-    const response = await fetch(`${pdpUrl}pdp/proof-sets/${datasetId}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching proofset ${datasetId}:`, error);
-    return null;
-  }
-};
+import { DataSet } from "@/types";
 
 /**
  * Hook to fetch and manage datasets
@@ -51,14 +11,12 @@ const fetchDatasetDetails = async (
  */
 export const useDatasets = () => {
   const signer = useEthersSigner();
-  const { data: network } = useNetwork();
   const { address } = useAccount();
 
-  return useQuery<DatasetsResponse, Error>({
+  return useQuery({
     enabled: !!address,
     queryKey: ["datasets", address],
     queryFn: async () => {
-      if (!network) throw new Error("Network not found");
       if (!signer) throw new Error("Signer not found");
       if (!address) throw new Error("Address not found");
 
@@ -68,87 +26,68 @@ export const useDatasets = () => {
       });
 
       // Initialize Pandora service
-      const filecoinWarmStorageService = new FilecoinWarmStorageService(
+      const warmStorageService = new WarmStorageService(
         synapse.getProvider(),
-        synapse.getPandoraAddress(),
+        synapse.getWarmStorageAddress(),
         synapse.getPDPVerifierAddress()
       );
 
       // Fetch providers and datasets in parallel
       const [providers, datasets] = await Promise.all([
-        filecoinWarmStorageService.getAllApprovedProviders(),
-        filecoinWarmStorageService.getClientProofSetsWithDetails(address),
+        warmStorageService.getAllApprovedProviders(),
+        warmStorageService.getClientDataSetsWithDetails(address),
       ]);
 
       // Create a map of provider URLs for quick lookup
       const providerUrlMap = new Map(
-        providers.map((provider: Provider) => [provider.owner, provider.pdpUrl])
+        providers.map((provider) => [
+          provider.serviceProvider.toLowerCase(),
+          provider.serviceURL,
+        ])
       );
 
       // Fetch dataset details in parallel with proper error handling
       const datasetDetailsPromises = datasets.map(
-        async (dataset: EnhancedDatasetInfo) => {
-          const pdpUrl = providerUrlMap.get(dataset.payee);
-          if (!pdpUrl) {
-            console.warn(`No provider URL found for payee ${dataset.payee}`);
-            return {
-              datasetId: dataset.pdpVerifierProofSetId,
-              details: null,
-              pdpUrl: null,
-              provider: null,
-            };
-          }
-
+        async (dataset: EnhancedDataSetInfo) => {
+          const serviceURL = providerUrlMap.get(dataset.payee.toLowerCase());
+          // Find the full provider details
+          const provider = providers.find(
+            (p) =>
+              p.serviceProvider.toLowerCase() === dataset.payee.toLowerCase()
+          );
           try {
-            const details = await fetchDatasetDetails(
-              dataset.pdpVerifierProofSetId,
-              pdpUrl
+            const pdpServer = new PDPServer(null, serviceURL || "");
+            const data = await pdpServer.getDataSet(
+              dataset.pdpVerifierDataSetId
             );
-
-            // Find the full provider details
-            const provider = providers.find(
-              (p: Provider) => p.owner === dataset.payee
-            );
-
             return {
-              datasetId: dataset.pdpVerifierProofSetId,
-              details: details ? { ...details, pdpUrl } : null,
-              pdpUrl,
-              provider,
-            };
+              ...dataset,
+              provider: provider,
+              data,
+            } as DataSet;
           } catch (error) {
             console.error(
-              `Error fetching details for dataset ${dataset.pdpVerifierProofSetId}:`,
+              "Error getting dataset data for dataset : ",
+              dataset.pdpVerifierDataSetId,
               error
             );
             return {
-              datasetId: dataset.pdpVerifierProofSetId,
-              details: null,
-              pdpUrl,
-              provider:
-                providers.find((p: Provider) => p.owner === dataset.payee) ||
-                null,
-            };
+              ...dataset,
+            } as DataSet;
           }
         }
       );
 
-      const datasetDetailsResults = await Promise.all(datasetDetailsPromises);
+      const datasetDataResults = await Promise.all(datasetDetailsPromises);
 
       // Combine datasets with their details
       const datasetsWithDetails = datasets.map((dataset) => {
-        const detailsResult = datasetDetailsResults.find(
-          (result) => result.datasetId === dataset.pdpVerifierProofSetId
+        const dataResult = datasetDataResults.find(
+          (result) =>
+            result.pdpVerifierDataSetId === dataset.pdpVerifierDataSetId
         );
-
-        return {
-          ...dataset,
-          details: detailsResult?.details ?? null,
-          pdpUrl: detailsResult?.pdpUrl ?? null,
-          provider: detailsResult?.provider ?? null,
-        };
+        return dataResult;
       });
-
       return { datasets: datasetsWithDetails };
     },
     retry: false,

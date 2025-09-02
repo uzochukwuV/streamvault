@@ -17,7 +17,6 @@ export const StorageManager = () => {
     data,
     isLoading: isBalanceLoading,
     refetch: refetchBalances,
-    error,
   } = useBalances();
   const balances = data;
   const { mutation: paymentMutation, status } = usePayment();
@@ -27,7 +26,7 @@ export const StorageManager = () => {
   const handleRefetchBalances = async () => {
     await refetchBalances();
   };
-  console.log(error);
+
   if (!isConnected) {
     return null;
   }
@@ -406,7 +405,7 @@ const WalletBalancesSection = ({ balances, isLoading }: SectionProps) => (
         <span className="font-medium text-gray-600">
           {isLoading
             ? "..."
-            : `${balances?.filecoinWarmStorageBalanceFormatted?.toLocaleString()} USDFC`}
+            : `${balances?.warmStorageBalanceFormatted?.toLocaleString()} USDFC`}
         </span>
       </div>
       <div className="flex items-center justify-between p-2 bg-white rounded border border-gray-200">

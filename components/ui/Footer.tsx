@@ -29,15 +29,6 @@ export default function Footer() {
     },
   };
 
-  const floatingAnimation = {
-    y: [0, -5, 0],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut",
-    },
-  };
-
   const heartAnimation = {
     scale: [1, 1.2, 1],
     transition: {

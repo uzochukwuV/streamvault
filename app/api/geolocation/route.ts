@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 type Provider = {
   name: string;
   url: string;
-  transform: (data: any) => {
+  transform: (data: Response) => {
     code: string;
     country: string;
     region: string;

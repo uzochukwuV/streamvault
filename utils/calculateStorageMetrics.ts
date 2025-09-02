@@ -4,12 +4,12 @@ import { StorageCalculationResult } from "@/types";
 import { calculateRateAllowanceGB } from "@/utils/storageCostUtils";
 import {
   calculateCurrentStorageUsage,
-  fetchFilecoinWarmStorageStorageCosts,
-  fetchFilecoinWarmStorageBalanceData,
-} from "@/utils/filecoinWarmStorageUtils";
+  fetchWarmStorageCosts,
+  fetchWarmStorageBalanceData,
+} from "@/utils/warmStorageUtils";
 
 /**
- * Calculates storage metrics for FilecoinWarmStorage service based on balance data and user config.
+ * Calculates storage metrics for WarmStorage service based on balance data and user config.
  * Fetches costs and balances, then computes all relevant metrics for storage and allowance sufficiency.
  *
  * @param synapse - The Synapse instance
@@ -25,26 +25,26 @@ export const calculateStorageMetrics = async (
     Number(SIZE_CONSTANTS.GiB),
   minDaysThreshold: number = config.minDaysThreshold
 ): Promise<StorageCalculationResult> => {
-  // Fetch storage costs and balance data from FilecoinWarmStorage service
-  const storageCosts = await fetchFilecoinWarmStorageStorageCosts(synapse);
-  const filecoinWarmStorageBalance = await fetchFilecoinWarmStorageBalanceData(
+  // Fetch storage costs and balance data from WarmStorage service
+  const storageCosts = await fetchWarmStorageCosts(synapse);
+  const warmStorageBalance = await fetchWarmStorageBalanceData(
     synapse,
     storageCapacityBytes,
     persistencePeriodDays
   );
 
   // Calculate the rate needed per epoch for the requested storage
-  const rateNeeded = filecoinWarmStorageBalance.costs.perEpoch;
+  const rateNeeded = warmStorageBalance.costs.perEpoch;
 
   // Calculate daily lockup requirements at requested and current rates
   const lockupPerDay = TIME_CONSTANTS.EPOCHS_PER_DAY * rateNeeded;
   const lockupPerDayAtCurrentRate =
-    TIME_CONSTANTS.EPOCHS_PER_DAY * filecoinWarmStorageBalance.currentRateUsed;
+    TIME_CONSTANTS.EPOCHS_PER_DAY * warmStorageBalance.currentRateUsed;
 
   // Calculate remaining lockup and persistence days
   const currentLockupRemaining =
-    filecoinWarmStorageBalance.currentLockupAllowance -
-    filecoinWarmStorageBalance.currentLockupUsed;
+    warmStorageBalance.currentLockupAllowance -
+    warmStorageBalance.currentLockupUsed;
   // How many days of storage remain at requested rate
   const persistenceDaysLeft =
     Number(currentLockupRemaining) / Number(lockupPerDay);
@@ -58,14 +58,11 @@ export const calculateStorageMetrics = async (
 
   // Calculate current storage usage (in bytes and GB)
   const { currentStorageBytes, currentStorageGB } =
-    calculateCurrentStorageUsage(
-      filecoinWarmStorageBalance,
-      storageCapacityBytes
-    );
+    calculateCurrentStorageUsage(warmStorageBalance, storageCapacityBytes);
 
   // Determine sufficiency of allowances
   const isRateSufficient =
-    filecoinWarmStorageBalance.currentRateAllowance >= rateNeeded;
+    warmStorageBalance.currentRateAllowance >= rateNeeded;
   // Lockup is sufficient if enough days remain
   const isLockupSufficient = persistenceDaysLeft >= minDaysThreshold;
   // Both must be sufficient
@@ -73,18 +70,20 @@ export const calculateStorageMetrics = async (
 
   // Calculate how much storage (in GB) the current rate allowance supports
   const currentRateAllowanceGB = calculateRateAllowanceGB(
-    filecoinWarmStorageBalance.currentRateAllowance,
+    warmStorageBalance.currentRateAllowance,
     storageCosts
   );
-  // Amount of deposit needed for storage
-  const depositNeeded = filecoinWarmStorageBalance.depositAmountNeeded;
 
+  const depositNeeded = warmStorageBalance.depositAmountNeeded;
+  const rateUsed = warmStorageBalance.currentRateUsed;
+  const totalLockupNeeded = warmStorageBalance.lockupAllowanceNeeded;
+  const currentLockupAllowance = warmStorageBalance.currentLockupAllowance;
   return {
     rateNeeded, // rate needed per epoch for requested storage
-    rateUsed: filecoinWarmStorageBalance.currentRateUsed, // rate currently used
+    rateUsed: rateUsed, // rate currently used
     currentStorageBytes, // current storage used in bytes
     currentStorageGB, // current storage used in GB
-    totalLockupNeeded: filecoinWarmStorageBalance.lockupAllowanceNeeded, // total lockup needed
+    totalLockupNeeded, // total lockup needed
     depositNeeded, // deposit needed for storage
     persistenceDaysLeft, // days of storage left at requested rate
     persistenceDaysLeftAtCurrentRate, // days of storage left at current rate
@@ -92,6 +91,6 @@ export const calculateStorageMetrics = async (
     isLockupSufficient, // is the lockup allowance sufficient?
     isSufficient, // are both sufficient?
     currentRateAllowanceGB, // how much storage (GB) current rate allowance supports
-    currentLockupAllowance: filecoinWarmStorageBalance.currentLockupAllowance, // current lockup allowance
+    currentLockupAllowance, // current lockup allowance
   };
 };

@@ -1,21 +1,19 @@
 import { config } from "@/config";
-import {
-  PandoraService as FilecoinWarmStorageService,
-  Synapse,
-} from "@filoz/synapse-sdk";
+import { WarmStorageService, Synapse } from "@filoz/synapse-sdk";
 
 // Returns the providerId and the dataset with the most used storage for the client
 export const getDataset = async (synapse: Synapse, address: string) => {
-  const filecoinWarmStorageService = new FilecoinWarmStorageService(
+  const warmStorageService = new WarmStorageService(
     synapse.getProvider(),
-    synapse.getPandoraAddress(),
+    synapse.getWarmStorageAddress(),
     synapse.getPDPVerifierAddress()
   );
   let providerId;
   let mostUtilizedDataset;
   // Fetch all datasets for the client
-  const allDatasets =
-    await filecoinWarmStorageService.getClientProofSetsWithDetails(address);
+  const allDatasets = await warmStorageService.getClientDataSetsWithDetails(
+    address
+  );
 
   // Filter datasets based on CDN usage
   const datasetsWithCDN = allDatasets.filter((dataset) => dataset.withCDN);
@@ -27,10 +25,10 @@ export const getDataset = async (synapse: Synapse, address: string) => {
   try {
     // Find the dataset with the highest currentRootCount
     mostUtilizedDataset = datasets.reduce((max, dataset) => {
-      return dataset.currentRootCount > max.currentRootCount ? dataset : max;
+      return dataset.currentPieceCount > max.currentPieceCount ? dataset : max;
     }, datasets[0]);
     if (mostUtilizedDataset) {
-      providerId = await filecoinWarmStorageService.getProviderIdByAddress(
+      providerId = await warmStorageService.getProviderIdByAddress(
         mostUtilizedDataset.payee
       );
     }

@@ -1,7 +1,7 @@
 "use client";
 import { StorageManager } from "@/components/StorageManager";
 import { useAccount } from "wagmi";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileUploader } from "../components/FileUploader";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "@/components/ui/Confetti";
@@ -11,8 +11,9 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useBalances } from "@/hooks/useBalances";
 import Github from "@/components/ui/icons/Github";
 import Filecoin from "@/components/ui/icons/Filecoin";
+import { useRouter, useSearchParams } from "next/navigation";
 
-type Tab = "manage-storage" | "upload" | "dataset";
+type Tab = "manage-storage" | "upload" | "datasets";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -39,8 +40,34 @@ const itemVariants = {
 export default function Home() {
   const { isConnected, chainId } = useAccount();
   const [activeTab, setActiveTab] = useState<Tab>("manage-storage");
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { showConfetti } = useConfetti();
   const { data: balances, isLoading: isLoadingBalances } = useBalances();
+
+  const isTab = (value: string | null): value is Tab =>
+    value === "manage-storage" || value === "upload" || value === "datasets";
+
+  const updateUrl = (tab: Tab) => {
+    const params = new URLSearchParams(searchParams?.toString());
+    params.set("tab", tab);
+    router.replace(`?${params.toString()}`);
+  };
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    updateUrl(tab);
+  };
+
+  useEffect(() => {
+    const tabParam = searchParams?.get("tab");
+    if (isTab(tabParam) && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    } else if (!tabParam) {
+      updateUrl(activeTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   return (
     <div className="w-full flex flex-col justify-center min-h-fit">
@@ -160,7 +187,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveTab("manage-storage")}
+                  onClick={() => handleTabChange("manage-storage")}
                   className={`flex-1 py-2 px-4 text-center border-b-2 transition-colors ${
                     activeTab === "manage-storage"
                       ? "border-primary text-primary-foreground bg-primary"
@@ -172,7 +199,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveTab("upload")}
+                  onClick={() => handleTabChange("upload")}
                   className={`flex-1 py-2 px-4 text-center border-b-2 transition-colors ${
                     activeTab === "upload"
                       ? "border-primary text-primary-foreground bg-primary"
@@ -184,9 +211,9 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveTab("dataset")}
+                  onClick={() => handleTabChange("datasets")}
                   className={`flex-1 py-2 px-4 text-center border-b-2 transition-colors ${
-                    activeTab === "dataset"
+                    activeTab === "datasets"
                       ? "border-primary text-primary-foreground bg-primary"
                       : "border-transparent text-secondary hover:text-primary hover:bg-secondary/10"
                   }`}
@@ -224,9 +251,9 @@ export default function Home() {
                     <FileUploader />
                   </motion.div>
                 ) : (
-                  activeTab === "dataset" && (
+                  activeTab === "datasets" && (
                     <motion.div
-                      key="dataset"
+                      key="datasets"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}

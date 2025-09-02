@@ -4,7 +4,8 @@
 import { useAccount } from "wagmi";
 import { useDatasets } from "@/hooks/useDatasets";
 import { useDownloadPiece } from "@/hooks/useDownloadPiece";
-import { DataSet, Piece } from "@/types";
+import { DataSet } from "@/types";
+import { DataSetPieceData } from "@filoz/synapse-sdk";
 
 export const DatasetsViewer = () => {
   const { isConnected } = useAccount();
@@ -31,97 +32,106 @@ export const DatasetsViewer = () => {
         </div>
       ) : data && data.datasets && data.datasets.length > 0 ? (
         <div className="mt-4 space-y-6">
-          {data.datasets.map((dataset: DataSet) => (
-            <div
-              key={dataset.railId}
-              className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900">
-                    Dataset #{dataset.pdpVerifierProofSetId}
-                  </h4>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Status:{" "}
-                    <span
-                      className={`font-medium ${
-                        dataset.isLive ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      {dataset.isLive ? "Live" : "Inactive"}
-                    </span>
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    With CDN:{" "}
-                    <span className={`font-medium `}>
-                      {dataset.withCDN ? "⚡ Yes ⚡" : "No"}
-                    </span>
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    PDP URL:{" "}
-                    <span
-                      className="cursor-pointer"
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          dataset.details?.pdpUrl || ""
-                        );
-                        window.alert("PDP URL copied to clipboard");
-                      }}
-                    >
-                      {dataset.details?.pdpUrl}
-                    </span>
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">
-                    Commission: {dataset.commissionBps / 100}%
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Managed: {dataset.isManaged ? "Yes" : "No"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <h5 className="text-sm font-medium text-gray-900 mb-2">
-                  Piece Details
-                </h5>
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+          {data.datasets.map(
+            (dataset: DataSet | undefined) =>
+              dataset && (
+                <div
+                  key={dataset.railId}
+                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                >
+                  <div className="flex justify-between items-start mb-4">
                     <div>
-                      <p className="text-sm text-gray-600">
-                        Current Piece Count
+                      <h4 className="text-lg font-medium text-gray-900">
+                        Dataset #{dataset.pdpVerifierDataSetId}
+                      </h4>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Status:{" "}
+                        <span
+                          className={`font-medium ${
+                            dataset.isLive ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {dataset.isLive ? "Live" : "Inactive"}
+                        </span>
                       </p>
-                      <p className="font-medium">{dataset.currentRootCount}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        With CDN:{" "}
+                        <span className={`font-medium `}>
+                          {dataset.withCDN ? "⚡ Yes ⚡" : "No"}
+                        </span>
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        PDP URL:{" "}
+                        <span
+                          className="cursor-pointer"
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              dataset.provider?.serviceURL || ""
+                            );
+                            window.alert("PDP URL copied to clipboard");
+                          }}
+                        >
+                          {dataset.provider?.serviceURL}
+                        </span>
+                      </p>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Next Piece ID</p>
-                      <p className="font-medium">{dataset.nextRootId}</p>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">
+                        Commission: {dataset.commissionBps / 100}%
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Managed: {dataset.isManaged ? "Yes" : "No"}
+                      </p>
                     </div>
                   </div>
 
-                  {dataset.details?.roots && (
-                    <div className="mt-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <h6 className="text-sm font-medium text-gray-900">
-                          Available Pieces
-                        </h6>
-                        <p className="text-sm text-gray-500">
-                          Next Challenge: Epoch{" "}
-                          {dataset.details.nextChallengeEpoch}
-                        </p>
+                  <div className="mt-4">
+                    <h5 className="text-sm font-medium text-gray-900 mb-2">
+                      Piece Details
+                    </h5>
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-sm text-gray-600">
+                            Current Piece Count
+                          </p>
+                          <p className="font-medium">
+                            {dataset.currentPieceCount}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Next Piece ID</p>
+                          <p className="font-medium">{dataset.nextPieceId}</p>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        {dataset.details.roots.map((piece) => (
-                          <PieceDetails key={piece.rootId} piece={piece} />
-                        ))}
-                      </div>
+
+                      {dataset.data?.pieces && (
+                        <div className="mt-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <h6 className="text-sm font-medium text-gray-900">
+                              Available Pieces
+                            </h6>
+                            <p className="text-sm text-gray-500">
+                              Next Challenge: Epoch{" "}
+                              {dataset.data.nextChallengeEpoch}
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            {dataset.data.pieces.map((piece) => (
+                              <PieceDetails
+                                key={piece.pieceId}
+                                piece={piece}
+                                dataset={dataset!}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              )
+          )}
         </div>
       ) : (
         <div className="flex justify-center items-center py-8">
@@ -135,20 +145,31 @@ export const DatasetsViewer = () => {
 /**
  * Component to display a piece and a download button
  */
-const PieceDetails = ({ piece }: { piece: Piece }) => {
-  const filename = `piece-${piece.rootId}.png`;
-  const { downloadMutation } = useDownloadPiece(piece.rootCid, filename);
+const PieceDetails = ({
+  piece,
+  dataset,
+}: {
+  piece: DataSetPieceData;
+  dataset: DataSet;
+}) => {
+  const filename = `piece-${piece.pieceCid}.png`;
+  const { downloadMutation } = useDownloadPiece(
+    piece.pieceCid.toString(),
+    filename
+  );
 
   return (
     <div
-      key={piece.rootId}
+      key={piece.pieceId.toString()}
       className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200"
     >
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900">
-          Piece #{piece.rootId}
+          Piece #{piece.pieceId}
         </p>
-        <p className="text-xs text-gray-500 truncate">{piece.rootCid}</p>
+        <p className="text-xs text-gray-500 truncate">
+          {piece.pieceCid.toString()}
+        </p>
       </div>
       <button
         onClick={() => downloadMutation.mutate()}

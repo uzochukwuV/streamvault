@@ -2,10 +2,15 @@ import { useMutation } from "@tanstack/react-query";
 import { useEthersSigner } from "@/hooks/useEthers";
 import { useState } from "react";
 import { useConfetti } from "@/hooks/useConfetti";
-import { useNetwork } from "@/hooks/useNetwork";
-import { Synapse, TOKENS, CONTRACT_ADDRESSES } from "@filoz/synapse-sdk";
+import {
+  Synapse,
+  TOKENS,
+  CONTRACT_ADDRESSES,
+  TIME_CONSTANTS,
+} from "@filoz/synapse-sdk";
 import { DATA_SET_CREATION_FEE, MAX_UINT256, getDataset } from "@/utils";
 import { useAccount } from "wagmi";
+import { config } from "@/config";
 
 /**
  * Hook to handle payment for storage
@@ -20,7 +25,6 @@ export const usePayment = () => {
   const signer = useEthersSigner();
   const [status, setStatus] = useState<string>("");
   const { triggerConfetti } = useConfetti();
-  const { data: network } = useNetwork();
   const { address } = useAccount();
   const mutation = useMutation({
     mutationFn: async ({
@@ -33,15 +37,14 @@ export const usePayment = () => {
       depositAmount: bigint;
     }) => {
       if (!signer) throw new Error("Signer not found");
-      if (!network) throw new Error("Network not found");
       if (!address) throw new Error("Address not found");
-      const paymentsAddress = CONTRACT_ADDRESSES.PAYMENTS[network];
 
       setStatus("🔄 Preparing transaction...");
       const synapse = await Synapse.create({
         signer,
         disableNonceManager: false,
       });
+      const paymentsAddress = CONTRACT_ADDRESSES.PAYMENTS[synapse.getNetwork()];
 
       const { dataset } = await getDataset(synapse, address);
 
@@ -83,9 +86,10 @@ export const usePayment = () => {
         "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
       );
       const transaction = await synapse.payments.approveService(
-        synapse.getPandoraAddress(),
+        synapse.getWarmStorageAddress(),
         epochRateAllowance,
-        lockupAllowance + fee
+        lockupAllowance + fee,
+        TIME_CONSTANTS.EPOCHS_PER_DAY * BigInt(config.persistencePeriod)
       );
       await transaction.wait();
       setStatus(

@@ -4,7 +4,7 @@ import { StorageCosts } from "@/types";
 
 /**
  * Returns the price per TiB per month, depending on CDN usage.
- * @param storageCosts - The storage cost object from FilecoinWarmStorage service
+ * @param storageCosts - The storage cost object from WarmStorage service
  * @returns The price per TiB per month as a bigint
  */
 export const getPricePerTBPerMonth = (storageCosts: StorageCosts): bigint => {
@@ -16,7 +16,7 @@ export const getPricePerTBPerMonth = (storageCosts: StorageCosts): bigint => {
 /**
  * Calculates the storage capacity in GB that can be supported by a given rate allowance.
  * @param rateAllowance - The current rate allowance (bigint)
- * @param storageCosts - The storage cost object from FilecoinWarmStorage service
+ * @param storageCosts - The storage cost object from WarmStorage service
  * @returns The number of GB that can be supported by the rate allowance
  */
 export const calculateRateAllowanceGB = (
