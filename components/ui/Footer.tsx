@@ -29,15 +29,6 @@ export default function Footer() {
     },
   };
 
-  const floatingAnimation = {
-    y: [0, -5, 0],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut",
-    },
-  };
-
   const heartAnimation = {
     scale: [1, 1.2, 1],
     transition: {
@@ -74,7 +65,7 @@ export default function Footer() {
               className="text-3xl font-bold uppercase tracking-tighter text-foreground flex items-center gap-2"
             >
               <Filecoin />
-              Fil services demo
+              Filecoin onchain cloud demo
             </motion.h1>
           </motion.div>
           <motion.div

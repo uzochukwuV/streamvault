@@ -1,47 +1,47 @@
 import {
-  PandoraService as FilecoinWarmStorageService,
+  WarmStorageService,
   SIZE_CONSTANTS,
   Synapse,
   TIME_CONSTANTS,
 } from "@filoz/synapse-sdk";
 import { config } from "@/config";
-import { FilecoinWarmStorageBalance, StorageCosts } from "@/types";
-import { DATA_SET_CREATION_FEE } from "./constants";
+import { WarmStorageBalance, StorageCosts } from "@/types";
+import { DATA_SET_CREATION_FEE } from "@/utils/constants";
 
 /**
- * Fetches the current storage costs from the FilecoinWarmStorage service.
+ * Fetches the current storage costs from the WarmStorage service.
  * @param synapse - The Synapse instance
  * @returns The storage costs object
  */
-export const fetchFilecoinWarmStorageStorageCosts = async (
+export const fetchWarmStorageCosts = async (
   synapse: Synapse
 ): Promise<StorageCosts> => {
-  const filecoinWarmStorageService = new FilecoinWarmStorageService(
+  const warmStorageService = new WarmStorageService(
     synapse.getProvider(),
-    synapse.getPandoraAddress(),
+    synapse.getWarmStorageAddress(),
     synapse.getPDPVerifierAddress()
   );
-  return filecoinWarmStorageService.getServicePrice();
+  return warmStorageService.getServicePrice();
 };
 
 /**
- * Fetches the current FilecoinWarmStorage balance data for a given storage capacity (in bytes) and period (in days).
+ * Fetches the current WarmStorage balance data for a given storage capacity (in bytes) and period (in days).
  * @param synapse - The Synapse instance
  * @param storageCapacityBytes - Storage capacity in bytes
  * @param persistencePeriodDays - Desired persistence period in days
- * @returns The FilecoinWarmStorage balance data object
+ * @returns The WarmStorage balance data object
  */
-export const fetchFilecoinWarmStorageBalanceData = async (
+export const fetchWarmStorageBalanceData = async (
   synapse: Synapse,
   storageCapacityBytes: number,
   persistencePeriodDays: number
-): Promise<FilecoinWarmStorageBalance> => {
-  const filecoinWarmStorageService = new FilecoinWarmStorageService(
+): Promise<WarmStorageBalance> => {
+  const warmStorageService = new WarmStorageService(
     synapse.getProvider(),
-    synapse.getPandoraAddress(),
+    synapse.getWarmStorageAddress(),
     synapse.getPDPVerifierAddress()
   );
-  return filecoinWarmStorageService.checkAllowanceForStorage(
+  return warmStorageService.checkAllowanceForStorage(
     storageCapacityBytes,
     config.withCDN,
     synapse.payments,
@@ -52,29 +52,30 @@ export const fetchFilecoinWarmStorageBalanceData = async (
 /**
  * Calculates current storage usage based on rate usage and storage capacity.
  *
- * @param pandoraBalance - The FilecoinWarmStorage balance data
+ * @param warmStorageBalance - The WarmStorage balance data
  * @param storageCapacityBytes - The storage capacity in bytes
  * @returns Object with currentStorageBytes and currentStorageGB
  */
 export const calculateCurrentStorageUsage = (
-  pandoraBalance: FilecoinWarmStorageBalance,
+  warmStorageBalance: WarmStorageBalance,
   storageCapacityBytes: number
 ): { currentStorageBytes: bigint; currentStorageGB: number } => {
   let currentStorageBytes = 0n;
   let currentStorageGB = 0;
 
   if (
-    pandoraBalance.currentRateUsed > 0n &&
-    pandoraBalance.rateAllowanceNeeded > 0n
+    warmStorageBalance.currentRateUsed > 0n &&
+    warmStorageBalance.rateAllowanceNeeded > 0n
   ) {
     try {
       // Proportionally calculate storage usage based on rate used
       currentStorageBytes =
-        (pandoraBalance.currentRateUsed * BigInt(storageCapacityBytes)) /
-        pandoraBalance.rateAllowanceNeeded;
+        (warmStorageBalance.currentRateUsed * BigInt(storageCapacityBytes)) /
+        warmStorageBalance.rateAllowanceNeeded;
       // Convert bytes to GB
       currentStorageGB =
         Number(currentStorageBytes) / Number(SIZE_CONSTANTS.GiB);
+      console.log("currentStorageGB", currentStorageGB);
     } catch (error) {
       console.warn("Failed to calculate current storage usage:", error);
     }
@@ -86,26 +87,26 @@ export const calculateCurrentStorageUsage = (
 /**
  * Checks if the current allowances and balances are sufficient for storage and dataset creation.
  *
- * @param filecoinWarmStorageBalance - The FilecoinWarmStorage balance data
+ * @param warmStorageBalance - The WarmStorage balance data
  * @param minDaysThreshold - Minimum days threshold for lockup sufficiency
  * @param includeDataSetCreationFee - Whether to include the dataset creation fee in calculations
  * @returns Object with sufficiency flags and allowance details
  */
 export const checkAllowances = async (
-  filecoinWarmStorageBalance: FilecoinWarmStorageBalance,
+  warmStorageBalance: WarmStorageBalance,
   minDaysThreshold: number,
   includeDataSetCreationFee: boolean
 ) => {
   // Calculate the rate needed per epoch
-  const rateNeeded = filecoinWarmStorageBalance.costs.perEpoch;
+  const rateNeeded = warmStorageBalance.costs.perEpoch;
 
   // Calculate daily lockup requirements
   const lockupPerDay = TIME_CONSTANTS.EPOCHS_PER_DAY * rateNeeded;
 
   // Calculate remaining lockup and persistence days
   const currentLockupRemaining =
-    filecoinWarmStorageBalance.currentLockupAllowance -
-    filecoinWarmStorageBalance.currentLockupUsed;
+    warmStorageBalance.currentLockupAllowance -
+    warmStorageBalance.currentLockupUsed;
 
   // Calculate total allowance needed including dataset creation fee if required
   const dataSetCreationFee = includeDataSetCreationFee
@@ -113,15 +114,15 @@ export const checkAllowances = async (
     : BigInt(0);
 
   // Use available properties for lockup and deposit
-  const totalLockupNeeded = filecoinWarmStorageBalance.lockupAllowanceNeeded;
-  const depositNeeded = filecoinWarmStorageBalance.depositAmountNeeded;
+  const totalLockupNeeded = warmStorageBalance.lockupAllowanceNeeded;
+  const depositNeeded = warmStorageBalance.depositAmountNeeded;
 
   // Use the greater of current or needed rate allowance
   const rateAllowanceNeeded =
-    filecoinWarmStorageBalance.currentRateAllowance >
-    filecoinWarmStorageBalance.rateAllowanceNeeded
-      ? filecoinWarmStorageBalance.currentRateAllowance
-      : filecoinWarmStorageBalance.rateAllowanceNeeded;
+    warmStorageBalance.currentRateAllowance >
+    warmStorageBalance.rateAllowanceNeeded
+      ? warmStorageBalance.currentRateAllowance
+      : warmStorageBalance.rateAllowanceNeeded;
 
   // Add dataset creation fee to lockup and deposit if needed
   const lockupAllowanceNeeded = totalLockupNeeded + dataSetCreationFee;
@@ -137,7 +138,7 @@ export const checkAllowances = async (
 
   // Determine sufficiency of allowances
   const isRateSufficient =
-    filecoinWarmStorageBalance.currentRateAllowance >= rateAllowanceNeeded;
+    warmStorageBalance.currentRateAllowance >= rateAllowanceNeeded;
   // Lockup is sufficient if enough days remain and enough for dataset creation
   const isLockupSufficient =
     persistenceDaysLeft >= Number(minDaysThreshold) &&

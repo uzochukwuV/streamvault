@@ -1,8 +1,8 @@
-import { Synapse } from "@filoz/synapse-sdk";
-import { PandoraService as FilecoinWarmStorageService } from "@filoz/synapse-sdk";
+import { Synapse, TIME_CONSTANTS } from "@filoz/synapse-sdk";
+import { WarmStorageService } from "@filoz/synapse-sdk";
 import { config } from "@/config";
 import { ethers } from "ethers";
-import { checkAllowances } from "./filecoinWarmStorageUtils";
+import { checkAllowances } from "@/utils/warmStorageUtils";
 
 /**
  * Performs a preflight check before file upload to ensure sufficient USDFC balance and allowances
@@ -27,20 +27,19 @@ export const preflightCheck = async (
 ) => {
   // Verify signer and provider are available
   // Initialize Pandora service for allowance checks
-  const filecoinWarmStorageService = new FilecoinWarmStorageService(
+  const warmStorageService = new WarmStorageService(
     synapse.getProvider(),
-    synapse.getPandoraAddress(),
+    synapse.getWarmStorageAddress(),
     synapse.getPDPVerifierAddress()
   );
 
   // Step 1: Check if current allowance is sufficient for the file size
-  const filecoinWarmStorageBalance =
-    await filecoinWarmStorageService.checkAllowanceForStorage(
-      file.size,
-      config.withCDN,
-      synapse.payments,
-      config.persistencePeriod
-    );
+  const warmStorageBalance = await warmStorageService.checkAllowanceForStorage(
+    file.size,
+    config.withCDN,
+    synapse.payments,
+    config.persistencePeriod
+  );
 
   // Step 2: Check if allowances and balances are sufficient for storage and data set creation
   const {
@@ -49,7 +48,7 @@ export const preflightCheck = async (
     lockupAllowanceNeeded,
     depositAmountNeeded,
   } = await checkAllowances(
-    filecoinWarmStorageBalance,
+    warmStorageBalance,
     config.minDaysThreshold,
     includeDataSetCreationFee
   );
@@ -87,9 +86,10 @@ export const preflightCheck = async (
       "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
     );
     const approvalTx = await synapse.payments.approveService(
-      synapse.getPandoraAddress(),
+      synapse.getWarmStorageAddress(),
       rateAllowanceNeeded,
-      lockupAllowanceNeeded
+      lockupAllowanceNeeded,
+      TIME_CONSTANTS.EPOCHS_PER_DAY * BigInt(config.persistencePeriod)
     );
     await approvalTx.wait();
     updateStatus("💰 Filecoin Warm Storage service approved to spend USDFC");

@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Fil services demo</title>
+        <title>Filecoin onchain cloud demo</title>
         <meta
           name="description"
           content="Demo dApp Powered by synapse-sdk. Upload files to Filecoin with USDFC."
