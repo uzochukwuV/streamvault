@@ -65,7 +65,7 @@ export default function Footer() {
               className="text-3xl font-bold uppercase tracking-tighter text-foreground flex items-center gap-2"
             >
               <Filecoin />
-              Fil services demo
+              Filecoin onchain cloud demo
             </motion.h1>
           </motion.div>
           <motion.div

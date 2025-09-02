@@ -24,7 +24,7 @@ export function Navbar() {
           className="flex items-center gap-2"
         >
           <Image src="/filecoin.svg" alt="Filecoin" width={30} height={30} />
-          <h1 className="text-xl font-bold">Filecoin Services Uploader</h1>
+          <h1 className="text-xl font-bold">Filecoin Onchain Cloud dApp</h1>
         </motion.div>
       </motion.div>
       <motion.div

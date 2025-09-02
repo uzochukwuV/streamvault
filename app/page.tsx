@@ -98,7 +98,7 @@ export default function Home() {
           className="text-3xl font-bold uppercase tracking-tighter text-foreground flex items-center gap-2"
         >
           <Filecoin />
-          Fil services demo
+          Filecoin onchain cloud
           <motion.a
             whileHover={{ scale: 1.3 }}
             href="https://github.com/FIL-Builders/fs-upload-dapp"
