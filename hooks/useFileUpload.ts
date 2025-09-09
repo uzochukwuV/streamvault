@@ -69,10 +69,24 @@ export const useFileUpload = () => {
       setStatus("🔗 Setting up storage service and dataset...");
       setProgress(25);
 
-      // 7) Create storage service
+      // 7) Validate provider before creating storage service
+      if (providerId) {
+       
+        const provider = await synapse.getProviderInfo(providerId);
+        if (!provider || !provider.active) {
+          throw new Error(`Storage provider ${providerId} is not available or inactive`);
+        }
+        setStatus(`✅ Validated storage provider: ${provider.name || 'Unknown'}`);
+      }
+
+      // 8) Create storage service with enhanced error handling
       const storageService = await synapse.createStorage({
-        providerId,
+        providerId: 2,
+        forceCreateDataSet: true,
+        // dataSetId: 25,
+        uploadBatchSize: 5,
         callbacks: {
+          
           onDataSetResolved: (info) => {
             console.log("Dataset resolved:", info);
             setStatus("🔗 Existing dataset found and resolved");
@@ -81,10 +95,15 @@ export const useFileUpload = () => {
           onDataSetCreationStarted: (transactionResponse, statusUrl) => {
             console.log("Dataset creation started:", transactionResponse);
             console.log("Dataset creation status URL:", statusUrl);
-            setStatus("🏗️ Creating new dataset on blockchain...");
+            setStatus(`🏗️ Creating new dataset on blockchain... (tx: ${transactionResponse?.hash?.slice(0, 8)}...)`);
             setProgress(35);
           },
+          // onDataSetCreationError: (error) => {
+          //   console.error("Dataset creation failed:", error);
+          //   throw new Error(`Dataset creation failed: ${error.message || 'Unknown error'}`);
+          // },
           onDataSetCreationProgress: (status) => {
+
             console.log("Dataset creation progress:", status);
             if (status.transactionSuccess) {
               setStatus(`⛓️ Dataset transaction confirmed on chain`);
@@ -118,6 +137,9 @@ export const useFileUpload = () => {
             fileSize: file.size,
             pieceCid: piece.toV1().toString(),
           }));
+
+
+          
           setProgress(80);
         },
         onPieceAdded: (transactionResponse) => {

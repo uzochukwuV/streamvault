@@ -26,40 +26,55 @@ export const useDatasets = () => {
       });
 
       // Initialize Pandora service
-      const warmStorageService = new WarmStorageService(
+      const warmStorageService = await WarmStorageService.create(
         synapse.getProvider(),
         synapse.getWarmStorageAddress(),
-        synapse.getPDPVerifierAddress()
+        // synapse.getPDPVerifierAddress()
       );
 
       // Fetch providers and datasets in parallel
       const [providers, datasets] = await Promise.all([
-        warmStorageService.getAllApprovedProviders(),
+        warmStorageService.getApprovedProviderIds(),
         warmStorageService.getClientDataSetsWithDetails(address),
       ]);
+      console.log(providers, datasets)
 
+      const providerInfo = await Promise.all(providers.map(async (p)=>{
+        return await synapse.getProviderInfo(p); 
+      }))
       // Create a map of provider URLs for quick lookup
       const providerUrlMap = new Map(
-        providers.map((provider) => [
+        (await providerInfo).map(( provider) => [
           provider.serviceProvider.toLowerCase(),
-          provider.serviceURL,
+          provider.id,
         ])
       );
+
+      console.log(providerUrlMap)
+      console.log("holla u all 1")
 
       // Fetch dataset details in parallel with proper error handling
       const datasetDetailsPromises = datasets.map(
         async (dataset: EnhancedDataSetInfo) => {
-          const serviceURL = providerUrlMap.get(dataset.payee.toLowerCase());
+          console.log(dataset)
+          console.log("holla u all 2")
+          // const serviceURL = providerUrlMap.get(dataset.serviceProvider.toLowerCase());
+          console.log("holla u all 3")
+          // console.log(serviceURL)
           // Find the full provider details
-          const provider = providers.find(
+          const provider = providerInfo.find(
             (p) =>
               p.serviceProvider.toLowerCase() === dataset.payee.toLowerCase()
           );
+          console.log("holla u all 4")
+          console.log(provider)
           try {
-            const pdpServer = new PDPServer(null, serviceURL || "");
+            console.log("holla u all")
+            const pdpServer = new PDPServer(null,  "https://calibnet.pspsps.io/");
             const data = await pdpServer.getDataSet(
               dataset.pdpVerifierDataSetId
             );
+            console.log(data)
             return {
               ...dataset,
               provider: provider,

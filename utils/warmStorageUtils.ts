@@ -124,9 +124,10 @@ export const checkAllowances = async (
       ? warmStorageBalance.currentRateAllowance
       : warmStorageBalance.rateAllowanceNeeded;
 
-  // Add dataset creation fee to lockup and deposit if needed
+  // Add dataset creation fee ONLY to lockup allowance (not deposit)
+  // The fee is locked up for the duration, not deposited as liquid balance
   const lockupAllowanceNeeded = totalLockupNeeded + dataSetCreationFee;
-  const depositAmountNeeded = depositNeeded + dataSetCreationFee;
+  const depositAmountNeeded = depositNeeded; // Fee comes from lockup, not deposit
 
   // Check if lockup balance is sufficient for dataset creation
   const isLockupBalanceSufficientForDataSetCreation =

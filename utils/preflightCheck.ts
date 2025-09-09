@@ -26,15 +26,27 @@ export const preflightCheck = async (
   updateProgress: (progress: number) => void
 ) => {
   // Verify signer and provider are available
-  // Initialize Pandora service for allowance checks
-  const warmStorageService = new WarmStorageService(
+  // Initialize Warm Storage service for allowance checks
+  const warmStorageService =  WarmStorageService.create(
     synapse.getProvider(),
     synapse.getWarmStorageAddress(),
-    synapse.getPDPVerifierAddress()
+    // synapse.getPDPVerifierAddress()
   );
 
+  // Validate contract addresses are configured
+  const warmStorageAddress = synapse.getWarmStorageAddress();
+  const pdpVerifierAddress = synapse.getPDPVerifierAddress();
+  
+  if (!warmStorageAddress) {
+    throw new Error(`WarmStorage contract address not configured for network: ${synapse.getNetwork()}`);
+  }
+  
+  if (!pdpVerifierAddress) {
+    throw new Error(`PDPVerifier contract address not configured for network: ${synapse.getNetwork()}`);
+  }
+
   // Step 1: Check if current allowance is sufficient for the file size
-  const warmStorageBalance = await warmStorageService.checkAllowanceForStorage(
+  const warmStorageBalance = await (await warmStorageService).checkAllowanceForStorage(
     file.size,
     config.withCDN,
     synapse.payments,
@@ -58,30 +70,37 @@ export const preflightCheck = async (
     updateStatus("💰 Insufficient USDFC allowance...");
 
     // Step 3: Deposit USDFC to cover storage costs
-    updateStatus("💰 Depositing USDFC to cover storage costs...");
-    const depositTx = await synapse.payments.deposit(
-      depositAmountNeeded,
-      "USDFC",
-      {
-        onDepositStarting: () => updateStatus("💰 Depositing USDFC..."),
-        onAllowanceCheck: (current: bigint, required: bigint) =>
-          updateStatus(
-            `💰 Allowance check ${
-              current > required ? "sufficient" : "insufficient"
-            }`
-          ),
-        onApprovalTransaction: async (tx: ethers.TransactionResponse) => {
-          updateStatus(`💰 Approving USDFC... ${tx.hash}`);
-          const receipt = await tx.wait();
-          updateStatus(`💰 USDFC approved ${receipt?.hash}`);
-        },
-      }
-    );
-    await depositTx.wait();
-    updateStatus("💰 USDFC deposited successfully");
-    updateProgress(10);
+    if (depositAmountNeeded > 0n) {
+      updateStatus("💰 Depositing USDFC to cover storage costs...");
+      const depositTx = await synapse.payments.deposit(
+        depositAmountNeeded,
+        "USDFC",
+        {
+          onDepositStarting: () => updateStatus("💰 Depositing USDFC..."),
+          onAllowanceCheck: (current: bigint, required: bigint) =>
+            updateStatus(
+              `💰 Allowance check ${
+                current > required ? "sufficient" : "insufficient"
+              }`
+            ),
+          onApprovalTransaction: async (tx: ethers.TransactionResponse) => {
+            updateStatus(`💰 Approving USDFC... ${tx.hash}`);
+            const receipt = await tx.wait();
+            updateStatus(`💰 USDFC approved ${receipt?.hash}`);
+          },
+        }
+      );
+      await depositTx.wait();
+      updateStatus("💰 USDFC deposited successfully");
+      updateProgress(10);
+    }
 
-    // Step 4: Approve Filecoin Warm Storage service to spend USDFC at specified rates
+    // Step 4: Check current service allowances before approval
+    updateStatus("🔍 Validating service allowances...");
+    const currentServiceAllowances = await synapse.payments.allowance(warmStorageAddress);
+    console.log("Current service allowances:", currentServiceAllowances);
+    
+    // Step 5: Approve Filecoin Warm Storage service to spend USDFC at specified rates
     updateStatus(
       "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
     );

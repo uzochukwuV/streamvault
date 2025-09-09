@@ -3,10 +3,20 @@ import { WarmStorageService, Synapse } from "@filoz/synapse-sdk";
 
 // Returns the providerId and the dataset with the most used storage for the client
 export const getDataset = async (synapse: Synapse, address: string) => {
-  const warmStorageService = new WarmStorageService(
+  const warmStorageAddress = synapse.getWarmStorageAddress();
+  const pdpVerifierAddress = synapse.getPDPVerifierAddress();
+  
+  if (!warmStorageAddress) {
+    throw new Error(`No warm storage address configured for network: ${synapse.getNetwork()}`);
+  }
+  
+  if (!pdpVerifierAddress) {
+    throw new Error(`No PDP verifier address configured for network: ${synapse.getNetwork()}`);
+  }
+  
+  const warmStorageService = await WarmStorageService.create(
     synapse.getProvider(),
-    synapse.getWarmStorageAddress(),
-    synapse.getPDPVerifierAddress()
+    warmStorageAddress
   );
   let providerId;
   let mostUtilizedDataset;
@@ -28,8 +38,8 @@ export const getDataset = async (synapse: Synapse, address: string) => {
       return dataset.currentPieceCount > max.currentPieceCount ? dataset : max;
     }, datasets[0]);
     if (mostUtilizedDataset) {
-      providerId = await warmStorageService.getProviderIdByAddress(
-        mostUtilizedDataset.payee
+      [providerId] = await warmStorageService.getApprovedProviderIds(
+        // mostUtilizedDataset.payee
       );
     }
   } catch (error) {

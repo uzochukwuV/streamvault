@@ -12,6 +12,8 @@ import { DATA_SET_CREATION_FEE, MAX_UINT256, getDataset } from "@/utils";
 import { useAccount } from "wagmi";
 import { config } from "@/config";
 
+// Remove unused USDF token address - use TOKENS.USDFC instead
+
 /**
  * Hook to handle payment for storage
  * @param lockup - The lockup amount to be used for the storage
@@ -44,19 +46,20 @@ export const usePayment = () => {
         signer,
         disableNonceManager: false,
       });
-      const paymentsAddress = CONTRACT_ADDRESSES.PAYMENTS[synapse.getNetwork()];
-
+      const network = synapse.getNetwork();
+      const paymentsAddress = CONTRACT_ADDRESSES.WARM_STORAGE[network];
+      
+      if (!paymentsAddress) {
+        throw new Error(`No WARM_STORAGE contract address configured for network: ${network}`);
+      }
       const { dataset } = await getDataset(synapse, address);
-
       const hasDataset = !!dataset;
-
       const fee = hasDataset ? 0n : DATA_SET_CREATION_FEE;
 
       const amount = depositAmount + fee;
-
       const allowance = await synapse.payments.allowance(
+        paymentsAddress,
         TOKENS.USDFC,
-        paymentsAddress
       );
 
       const balance = await synapse.payments.walletBalance(TOKENS.USDFC);
@@ -68,20 +71,19 @@ export const usePayment = () => {
       if (allowance < MAX_UINT256 / 2n) {
         setStatus("💰 Approving USDFC to cover storage costs...");
         const transaction = await synapse.payments.approve(
-          TOKENS.USDFC,
           paymentsAddress,
-          MAX_UINT256
+          MAX_UINT256,
+          TOKENS.USDFC,
         );
         await transaction.wait();
         setStatus("💰 Successfully approved USDFC to cover storage costs");
       }
       if (amount > 0n) {
         setStatus("💰 Depositing USDFC to cover storage costs...");
-        const transaction = await synapse.payments.deposit(amount);
+        const transaction = await synapse.payments.deposit(amount, TOKENS.USDFC);
         await transaction.wait();
         setStatus("💰 Successfully deposited USDFC to cover storage costs");
       }
-
       setStatus(
         "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
       );
