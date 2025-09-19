@@ -309,7 +309,7 @@ function RightPanel({ queue, onPlay, creators, onTrade }: any) {
 
       <div className="pt-3 border-t border-white/6">
         <h4 className="text-sm text-gray-300 mb-2">Featured Creator</h4>
-        {creators.map((c) => (
+        {creators.map((c: any) => (
           <div key={c.id} className="mb-3">
             <CreatorCoinCard creator={c} onTrade={onTrade} />
           </div>
@@ -453,7 +453,7 @@ export default function StreamVaultApp() {
   const audioPlayer = useAudioPlayer();
 
   const [showTradeModal, setShowTradeModal] = useState(false);
-  const [tradeLocale, setTradeLocale] = useState({ type: "buy", creator: null });
+  const [tradeLocale, setTradeLocale] = useState<any>({ type: "buy", creator: null });
   // Memoize track conversion to prevent unnecessary re-conversions
   const convertTrackToPlayerFormat = useCallback((track: any): Track => {
     return {
