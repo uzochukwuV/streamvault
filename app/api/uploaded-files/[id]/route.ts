@@ -4,10 +4,10 @@ import { prisma } from '@/lib/database';
 // GET single uploaded file
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: Promise<string> } }
 ) {
   try {
-    const { id } = params;
+    const  id  = await params.id;
 
     const file = await prisma.uploadedFile.findUnique({
       where: { id },

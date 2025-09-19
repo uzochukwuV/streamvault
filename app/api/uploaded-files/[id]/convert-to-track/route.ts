@@ -3,10 +3,10 @@ import { prisma } from '@/lib/database';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: Promise<string>  } }
 ) {
   try {
-    const { id } = await params;
+    const id  = await params.id;
     const { title, description, genre, isPremium = false, price } = await request.json();
 
     // Validate required fields

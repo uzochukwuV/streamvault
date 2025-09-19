@@ -3,10 +3,10 @@ import { prisma } from '@/lib/database';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: Promise<string>  } }
 ) {
   try {
-    const { id } = params;
+    const  id  = await params.id;
 
     if (!id) {
       return NextResponse.json(
