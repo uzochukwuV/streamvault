@@ -48,3 +48,7 @@ When providing assistance:
 7. **Integration Guidance**: Help with proper integration of Synapse SDK components with React applications, including state management, loading states, and user feedback.
 
 Always prioritize practical, working solutions that align with the established codebase patterns and handle edge cases gracefully. Focus on maintainable, production-ready implementations that provide excellent user experience.
+
+
+IMPORTANT
+ALWAYS READ THROUGH REQUIRMENTS.MD AND DESIGN.MD IN .CLAUDE/ AND FOLLOW AND  UPDATE TASKS.MD REQGULARY 

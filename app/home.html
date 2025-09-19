@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Music Streaming Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+<div class="flex h-screen">
+<aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0">
+<div class="p-6">
+<h1 class="text-2xl font-bold text-gray-900">audiostream</h1>
+</div>
+<nav class="mt-8">
+<div class="px-6 space-y-1">
+<a class="flex items-center px-4 py-3 text-gray-700 bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">home</span>
+<span class="ml-4 font-medium">Home</span>
+</a>
+<a class="flex items-center px-4 py-3 text-gray-500 hover:bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">search</span>
+<span class="ml-4 font-medium">Browse</span>
+</a>
+<a class="flex items-center px-4 py-3 text-gray-500 hover:bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">radio</span>
+<span class="ml-4 font-medium">Radio</span>
+</a>
+</div>
+<div class="mt-8 px-6">
+<h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Your Library</h2>
+<div class="mt-4 space-y-1">
+<a class="flex items-center px-4 py-3 text-gray-500 hover:bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">history</span>
+<span class="ml-4 font-medium">Recently Played</span>
+</a>
+<a class="flex items-center px-4 py-3 text-gray-500 hover:bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">favorite_border</span>
+<span class="ml-4 font-medium">Liked Songs</span>
+</a>
+<a class="flex items-center px-4 py-3 text-gray-500 hover:bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">album</span>
+<span class="ml-4 font-medium">Albums</span>
+</a>
+<a class="flex items-center px-4 py-3 text-gray-500 hover:bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">mic_none</span>
+<span class="ml-4 font-medium">Artists</span>
+</a>
+</div>
+</div>
+<div class="mt-8 px-6">
+<h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Playlists</h2>
+<div class="mt-4 space-y-1">
+<a class="flex items-center px-4 py-3 text-gray-500 hover:bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">playlist_play</span>
+<span class="ml-4 font-medium">Chill Mix</span>
+</a>
+<a class="flex items-center px-4 py-3 text-gray-500 hover:bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">playlist_play</span>
+<span class="ml-4 font-medium">Workout Hits</span>
+</a>
+<a class="flex items-center px-4 py-3 text-gray-500 hover:bg-gray-100 rounded-lg" href="#">
+<span class="material-icons">add</span>
+<span class="ml-4 font-medium">Create Playlist</span>
+</a>
+</div>
+</div>
+</nav>
+</aside>
+<main class="flex-1 overflow-y-auto">
+<header class="sticky top-0 bg-gray-50/75 backdrop-blur-lg z-10">
+<div class="flex items-center justify-between p-6 border-b border-gray-200">
+<div class="flex items-center space-x-2">
+<button class="p-2 rounded-full bg-white shadow-md">
+<span class="material-icons text-gray-600">chevron_left</span>
+</button>
+<button class="p-2 rounded-full bg-white shadow-md">
+<span class="material-icons text-gray-600">chevron_right</span>
+</button>
+</div>
+<div class="w-1/2">
+<div class="relative">
+<span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+<input class="w-full bg-white border border-gray-200 rounded-full py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search for artists, songs, or podcasts" type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<button class="p-2 rounded-full hover:bg-gray-200">
+<span class="material-icons text-gray-600">notifications_none</span>
+</button>
+<img alt="User profile picture" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARNRb2VSixaZFC6j_0ZBFjulb2jlF0CpfPZhKHMS76jNuxcsrHHVOUAVaFMuPgS1Eg-YQaD8giFs1Qtvar_XKzIIMQABit5MkBMNqyhPggwI0n9dYCdhW1-E4PS6sSj-D1wTrQcapRhS3NdBxiQXV5eAJZG_EqXuJfxGHJeGO6aUx53V1dXgECbAJX1GvCRG-QmWcexYXJETkbmuhIvuzk6ofhoxj--tDEi8yz-DbjSoW3i0ZWTXDu_qEKg166jp6pWFAaRINLRDmp"/>
+</div>
+</div>
+</header>
+<div class="p-8">
+<section>
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-2xl font-bold">Good Afternoon</h2>
+<a class="text-sm font-semibold text-gray-500 hover:text-gray-900" href="#">Show all</a>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+<div class="bg-white rounded-lg shadow-md overflow-hidden flex items-center hover:bg-gray-100 transition-all duration-300">
+<img alt="Liked Songs album art" class="w-20 h-20 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhQdHEjw3E5xtNomKOZNNbvsBSRBkGDZpVzyAEbegQY5QKo321koh1icMWypohwip2QU-45iKZMnQSn4fyKlq-1KCsbdhEPL_F4aGCnqtWuTr2AEcJTKPuNmE2gIxwdaFYi_QJgsflai6aw5Dpr2nj_hwswTpNPjHr_PKL5u3A88T1X0N5If585OcAFDPRvTWqQHpMPWtuefJjAnTobXj6PVp36ob-NGBMMMLsQHt4TbmQo72A9Bz5pb13RHd658eCxzpFQV_OzdBr"/>
+<h3 class="font-semibold text-lg ml-4">Liked Songs</h3>
+</div>
+<div class="bg-white rounded-lg shadow-md overflow-hidden flex items-center hover:bg-gray-100 transition-all duration-300">
+<img alt="Chill Mix album art" class="w-20 h-20 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRyCbYT8QleOJ-TPIdEXyq75vackliFbWFtV9Sl1Tg0Qe9ycZaCz2G2UUyN2RqSu0_YsQ8lTv2QodXz4dYx7vH_JB6K8UN0movMWDPNHQzoT-Skf6VZ3BWnYx0SvfAGLQfXPJItSoXOQaekU1ZGO74AzOb1mWjItpSLkVJAEK8mgDAs3j3sEGlh4rnySFXwzUhhs3U9KSL8i-OSHKT9BEVsKW3mXPa4JoVckDt14vhuv97l-Pi_UfjkXgYn1qHQX76hbbVXTajKmW8"/>
+<h3 class="font-semibold text-lg ml-4">Chill Mix</h3>
+</div>
+<div class="bg-white rounded-lg shadow-md overflow-hidden flex items-center hover:bg-gray-100 transition-all duration-300">
+<img alt="Pop Rising album art" class="w-20 h-20 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZC4iTcIrkhxCb-xFV9A0yiwr-cWmrm41c-xnzg9Ob8XFGdt3I-vhvkV1mRiIKwR3DObwB7oEPAnbzgcGcG_JEL0qrC4VpY2I_82R23aOwxkhZKad-WP_pPgfklZ6aXUGgkRWElHey5fJwQTthumfMjtG8VCmggU5jrRcNbOwr_OOpTb-VNjQZtOtXUvJrN3dQ1dbpBLzC7SlWaMQEU-QaVK0k400luBTvQad9O8NNGwt47NO5DMubmS1zSD5C0_CUp-jmxgESVgKN"/>
+<h3 class="font-semibold text-lg ml-4">Pop Rising</h3>
+</div>
+<div class="bg-white rounded-lg shadow-md overflow-hidden flex items-center hover:bg-gray-100 transition-all duration-300">
+<img alt="Daily Mix 1 album art" class="w-20 h-20 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXbdDfo0T2msqydqGWCWVi_bffhvVYfx9GS6LIfVqLfsq6I9sJM9w40EWvFKW_duNBHTi3XCscaPJaOTioRBCmELyf7zbwE4jVbuKtYqgW6gQ06B43ELJfCJoIcXJPQogjtnmB9eXGUb1KrfoTysuQnDSlmFjoEIMP0WkBTmAwyHkVWomwowozNrfVNhiXqqaVI73KqgKciwkqvszzsY9_bPG1TXMrnTl32W_0LSAdFFTnvhoj5ENHVuUa5Z3bqsVx_aN5uA0Lo2NW"/>
+<h3 class="font-semibold text-lg ml-4">Daily Mix 1</h3>
+</div>
+</div>
+</section>
+<section class="mt-12">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-2xl font-bold">Recently Played</h2>
+<a class="text-sm font-semibold text-gray-500 hover:text-gray-900" href="#">Show all</a>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+<div class="group">
+<div class="relative">
+<img alt="Indie Pop album art" class="w-full h-auto rounded-lg shadow-lg object-cover aspect-square" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqqvBhoNpOXEryChPNSb_UocuUhN8Z48iLplsrL71g14uYD5ur_QBXa2OA_UtNF25MWvRQmRi3ZhlqHWEQrAGAEKMkGLofiFQuXXCObyX95ZTwmXq6vFJMBNOGChdIjgLzc7PXMclrORYc-15iq6axcznuXIi22IPiL-ijRBcyxoIsX0_aOdNoBzumdBSxl6-z_ZspLL72WxjqfbIfa38glQQTkdfAYuFSyxSEIFRyoiOOgybgLfMhN7zXxGxVYNDgrvzp6NgpT_cI"/>
+<button class="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg hover:bg-green-600">
+<span class="material-icons text-white text-3xl">play_arrow</span>
+</button>
+</div>
+<h3 class="font-semibold mt-3 text-gray-800">Indie Pop</h3>
+<p class="text-sm text-gray-500">Playlist</p>
+</div>
+<div class="group">
+<div class="relative">
+<img alt="Lo-Fi Beats album art" class="w-full h-auto rounded-lg shadow-lg object-cover aspect-square" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqf4vsaUz-o_jjqOdukOhgTlooThtf_YG8JzSM-jOqXr8zIXRaUKaJYLFjz8tqsTCBupPax9dkzhBLVSkGxVkBCI2e9GsBVc6ewgMB1rltI_ED7rt-Kd19zpc7kYxyRZpBd0CI_DPOqNlXW1Z-T8h4GkArZvbnjk_gyc63Ac7JMRfrE3EB1LmwWrAnH3S6pq96kxZ3x8laoRwXy2588Er3fNaBEV6bc2WFX5RFZeq6jKM4_j73y6wON-Gfh4-nz9PXjEGfioTOC-TS"/>
+<button class="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg hover:bg-green-600">
+<span class="material-icons text-white text-3xl">play_arrow</span>
+</button>
+</div>
+<h3 class="font-semibold mt-3 text-gray-800">Lo-Fi Beats</h3>
+<p class="text-sm text-gray-500">Playlist</p>
+</div>
+<div class="group">
+<div class="relative">
+<img alt="Acoustic Hits album art" class="w-full h-auto rounded-lg shadow-lg object-cover aspect-square" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5R5aB7gw4uYNg3tTiIuc1S6T_qTqJZAEqlWcxtUD774k3ca_K41N_Sit8nz-Wjtu1pGP2aepFGS-IzhfXNaRxgzm6pt0ngmsiBWB4iZHPb0N89d8LFl9e2chciDWz2Nb-sAIQwo-fV8hhWRMyQ1XVebA50DReSY6HCgJ3C0hpsFxBcCvErPD_LKXncoIU6572DhiqNnf32AvJdfnRcv_-K0riQhCvbKIy5HEddxXaL5mnCG_oR3kVGBR-HDPEuPksGt0ZHeK2jMeF"/>
+<button class="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg hover:bg-green-600">
+<span class="material-icons text-white text-3xl">play_arrow</span>
+</button>
+</div>
+<h3 class="font-semibold mt-3 text-gray-800">Acoustic Hits</h3>
+<p class="text-sm text-gray-500">Playlist</p>
+</div>
+<div class="group">
+<div class="relative">
+<img alt="Album art for 'Currents' by Tame Impala" class="w-full h-auto rounded-lg shadow-lg object-cover aspect-square" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDj4p0G5N_60TJspLFkmcwblUDdVQMvAE-MgomjsYki1Ym-GaTQiS7XgGY8ceqblUrGlVgDa5cXf2J1ru-tlKGHvbR4AfXggRlAr0V6vWcFbGAFlp6VIupiG7Iv8OjTUI1qiv6XyLziPXDA4pX3ekRkFvtkKAMuA_ye0TewV5KvNBgor028qCuTSMS0iz7GvpBLv2sjAIrGh58-8BsKM4u3xxlpXAAfARpLCab_MGilxkgEBpZocCItMlQto5Uq6W-opujIXESEcRs3"/>
+<button class="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg hover:bg-green-600">
+<span class="material-icons text-white text-3xl">play_arrow</span>
+</button>
+</div>
+<h3 class="font-semibold mt-3 text-gray-800">Currents</h3>
+<p class="text-sm text-gray-500">Tame Impala</p>
+</div>
+<div class="group">
+<div class="relative">
+<img alt="Album art for 'Blonde' by Frank Ocean" class="w-full h-auto rounded-lg shadow-lg object-cover aspect-square" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC43cIMgWMiQxiMPlYKK5NRH9zTXu-0LDq_H_ifO1XNC0EbDV9h-pEr4YnoISdB2AX5lhBT00o5IeW4fEZ0OAbbGRUqyZ6FCjLCor2XBVJ2_3uKEGKZXHngufNWN6K6M-SHhS-yGfvpH_HCT8GKI9b8xU2gIJNUwbi2GnKfDJO5R4SeK-o1lCss2cmb29XFb9P7PrwqX6fhlMdKZ52kussc9boRX7ui1o9e28wSvPBi2KwzPyGcLenhdKpjNb9rKssVh1AKP3Z3RIRI"/>
+<button class="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg hover:bg-green-600">
+<span class="material-icons text-white text-3xl">play_arrow</span>
+</button>
+</div>
+<h3 class="font-semibold mt-3 text-gray-800">Blonde</h3>
+<p class="text-sm text-gray-500">Frank Ocean</p>
+</div>
+<div class="group">
+<div class="relative">
+<img alt="Today's Top Hits album art" class="w-full h-auto rounded-lg shadow-lg object-cover aspect-square" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBM5ogMiNs-SKeqSusBGlyn3KjyrhUDH_AtJc7H9Z5CYvSoRzF268Sfl9qj7SSQH_ThKnlSUWt0Ig8-mWYU-PIwKztMKtp9m7GxODzHyF4byB3YsrvDCfjv3qe8TpRUt2vA2FQbR-w8nKyWcgH3f81GaankV_GtA-uSsVgiCBK-mmZnUCv6zrwk0C5Vt7DnAALYwOMfySPpNZJkoqzes2s6d2rMTeudztxeWQs7AiiA4JALu5IodOQk44TvsuAJQFui4vcTJA7Mb9fD"/>
+<button class="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg hover:bg-green-600">
+<span class="material-icons text-white text-3xl">play_arrow</span>
+</button>
+</div>
+<h3 class="font-semibold mt-3 text-gray-800">Today's Top Hits</h3>
+<p class="text-sm text-gray-500">Playlist</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+<footer class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-gray-200 z-20">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center w-1/4">
+<img alt="Currently playing album art: Currents by Tame Impala" class="w-14 h-14 rounded-md object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOFnneihR50BsP8-4AqAPpzfH2trA6417iYSga2PzkLYQ0CWCX0tt_qvOlRM1ASSWCEnFxPpw4IPI2Ca8uypfgllg8UNd_0u98-5dQAfAd88IDnGwVRzbEjZPwoOKoP7bU46JKjMcK-4eyWs31mrJb-3WNSgpslf6c7M1ghL-IzQkpnUuHN7tFno8zmp1-9ki0Lcb82CFg4cpRT51EWkCk4AHRmgBZZ3HqvEVQZPMfqljJfBbAPfNliKOUM1NdoR7ZExLyTqrdFIGy"/>
+<div class="ml-4">
+<h4 class="font-semibold">The Less I Know The Better</h4>
+<p class="text-sm text-gray-500">Tame Impala</p>
+</div>
+<button class="ml-4 p-1">
+<span class="material-icons text-gray-500 hover:text-green-500">favorite_border</span>
+</button>
+</div>
+<div class="flex flex-col items-center justify-center w-1/2">
+<div class="flex items-center space-x-6">
+<button class="p-1 text-gray-500 hover:text-gray-900">
+<span class="material-icons">shuffle</span>
+</button>
+<button class="p-1 text-gray-500 hover:text-gray-900">
+<span class="material-icons text-3xl">skip_previous</span>
+</button>
+<button class="w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center hover:bg-gray-700">
+<span class="material-icons text-4xl">pause</span>
+</button>
+<button class="p-1 text-gray-500 hover:text-gray-900">
+<span class="material-icons text-3xl">skip_next</span>
+</button>
+<button class="p-1 text-gray-500 hover:text-gray-900">
+<span class="material-icons">repeat</span>
+</button>
+</div>
+<div class="flex items-center w-full max-w-xl mt-2 space-x-2">
+<span class="text-xs text-gray-500">1:17</span>
+<div class="w-full bg-gray-300 rounded-full h-1.5">
+<div class="bg-gray-900 h-1.5 rounded-full" style="width: 35%"></div>
+</div>
+<span class="text-xs text-gray-500">3:38</span>
+</div>
+</div>
+<div class="flex items-center justify-end w-1/4 space-x-4 pr-4">
+<button class="p-1 text-gray-500 hover:text-gray-900">
+<span class="material-icons">queue_music</span>
+</button>
+<button class="p-1 text-gray-500 hover:text-gray-900">
+<span class="material-icons">devices</span>
+</button>
+<div class="flex items-center w-32">
+<button class="p-1 text-gray-500 hover:text-gray-900">
+<span class="material-icons">volume_up</span>
+</button>
+<div class="w-full bg-gray-300 rounded-full h-1.5 ml-2">
+<div class="bg-gray-900 h-1.5 rounded-full" style="width: 75%"></div>
+</div>
+</div>
+</div>
+</div>
+</footer>
+
+</body></html>

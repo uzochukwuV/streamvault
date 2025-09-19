@@ -1,0 +1,651 @@
+// StreamVault V2 Database Schema
+// Hybrid Web3 streaming platform with creator coin integration
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER & CREATOR MANAGEMENT
+// ============================================================================
+
+model User {
+  id            String  @id @default(cuid())
+  walletAddress String? @unique // Blockchain wallet (optional)
+  email         String? @unique
+  username      String  @unique
+  displayName   String
+  profileImage  String?
+  bio           String?
+  isVerified    Boolean @default(false)
+  isPremium     Boolean @default(false)
+
+  // Social metrics
+  followerCount  Int @default(0)
+  followingCount Int @default(0)
+  totalPlays     Int @default(0)
+
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastActiveAt DateTime @default(now())
+
+  // Relations
+  createdTracks Track[]
+  playlists     Playlist[]
+  likes         Like[]
+  comments      Comment[]
+  follows       Follow[]   @relation("Follower")
+  followedBy    Follow[]   @relation("Following")
+  plays         Play[]
+
+  // Creator-specific fields
+  creator Creator?
+
+  // Credit system relations
+  credits          UserCredits?
+  sponsoredUploads SponsoredUpload[]
+
+  // File upload relations
+  uploadedFiles UploadedFile[]
+
+  @@map("users")
+}
+
+model Creator {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Creator details
+  stageName   String   @unique
+  genre       String[]
+  description String?
+
+  // Blockchain integration
+  walletAddress String? @unique // Creator's crypto wallet
+
+  // Analytics metrics (synced with blockchain)
+  totalPlays      Int     @default(0)
+  monthlyPlays    Int     @default(0)
+  followerCount   Int     @default(0)
+  monthlyRevenue  Decimal @default(0) @db.Decimal(18, 8) // in FIL
+  engagementScore Int     @default(0) // 0-100
+
+  // Creator coin status
+  hasCoin       Boolean   @default(false)
+  coinAddress   String?   @unique // Smart contract address
+  coinCreatedAt DateTime?
+  coinTxHash    String? // Creation transaction hash
+
+  // Oracle sync tracking
+  lastSyncAt     DateTime?
+  syncErrorCount Int       @default(0)
+  lastSyncError  String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tracks               Track[]
+  milestones           CreatorMilestone[]
+  oracleLogs           OracleSyncLog[]
+  revenueDistributions RevenueDistribution[]
+  uploadedFiles        UploadedFile[]
+
+  @@map("creators")
+}
+
+// ============================================================================
+// FILE UPLOAD TRACKING
+// ============================================================================
+
+model UploadedFile {
+  id String @id @default(cuid())
+
+  // File identification
+  fileName     String
+  originalName String // Original filename from user
+  fileSize     Int // in bytes
+  mimeType     String // audio/mpeg, video/mp4, etc.
+  fileHash     String // Filecoin piece CID
+
+  // Upload details
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creatorId String? // If uploaded by a creator
+  creator   Creator? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+
+  // Filecoin/Blockchain data
+  pieceCid        String  @unique // Filecoin piece CID (v1)
+  txHash          String? // Transaction hash from upload
+  blockNumber     Int? // Block number when confirmed
+  storageProvider String? // Synapse storage provider used
+
+  // Processing status
+  uploadStatus    FileUploadStatus @default(PROCESSING)
+  processingError String?
+
+  // Metadata (extracted from file)
+  duration Int? // For audio/video files (seconds)
+  bitrate  String? // Audio bitrate
+  genre    String? // Extracted genre
+  artwork  String? // Extracted artwork URL/hash
+
+  // Content management
+  isPublic      Boolean  @default(false)
+  isPremium     Boolean  @default(false)
+  encryptionKey String? // For premium encrypted content
+  tags          String[] // User-defined tags
+
+  // Analytics
+  downloadCount Int       @default(0)
+  playCount     Int       @default(0) // For media files
+  lastAccessed  DateTime?
+
+  // Credit system integration
+  creditsCost  Int     @default(0) // Credits spent on upload
+  wasSponsored Boolean @default(false)
+
+  // Timestamps
+  uploadedAt  DateTime  @default(now())
+  processedAt DateTime?
+  publishedAt DateTime? // When converted to Track
+
+  // Relations
+  convertedTrack Track?  @relation(fields: [trackId], references: [id]) // If this file became a published track
+  trackId        String?
+
+  @@index([userId])
+  @@index([creatorId])
+  @@index([pieceCid])
+  @@index([uploadedAt])
+  @@map("uploaded_files")
+}
+
+// ============================================================================
+// CONTENT MANAGEMENT
+// ============================================================================
+
+model Track {
+  id String @id @default(cuid())
+
+  // Basic track info
+  title       String
+  description String?
+  genre       String
+  duration    Int // in seconds
+
+  // Filecoin storage
+  fileHash        String // IPFS/Filecoin hash
+  fileName        String
+  fileSize        Int // in bytes
+  storageProvider String? // Synapse storage provider
+  encryptionKey   String? // For premium content
+
+  // Analytics
+  playCount    Int @default(0)
+  likeCount    Int @default(0)
+  commentCount Int @default(0)
+  shareCount   Int @default(0)
+
+  // Monetization
+  isPremium Boolean  @default(false)
+  price     Decimal? @db.Decimal(18, 8) // in FIL
+
+  // Creator relation
+  creatorId String
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  // Relations
+  likes          Like[]
+  comments       Comment[]
+  plays          Play[]
+  playlistTracks PlaylistTrack[]
+  User           User?           @relation(fields: [userId], references: [id])
+  userId         String?
+  UploadedFile   UploadedFile[]
+
+  @@map("tracks")
+}
+
+model Play {
+  id      String  @id @default(cuid())
+  trackId String
+  track   Track   @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  userId  String? // null for anonymous plays
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Play details
+  duration    Int // How long they listened (seconds)
+  completedAt DateTime @default(now())
+  ipAddress   String? // For analytics
+  userAgent   String? // For analytics
+
+  @@map("plays")
+}
+
+model Like {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId String
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, trackId])
+  @@map("likes")
+}
+
+model Comment {
+  id      String @id @default(cuid())
+  content String
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId String
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("comments")
+}
+
+model Follow {
+  id          String @id @default(cuid())
+  followerId  String
+  follower    User   @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User   @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+// ============================================================================
+// PLAYLIST SYSTEM
+// ============================================================================
+
+model Playlist {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  isPublic    Boolean @default(false)
+  coverImage  String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tracks PlaylistTrack[]
+
+  @@map("playlists")
+}
+
+model PlaylistTrack {
+  id         String   @id @default(cuid())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  trackId    String
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  position Int // Order in playlist
+  addedAt  DateTime @default(now())
+
+  @@unique([playlistId, trackId])
+  @@map("playlist_tracks")
+}
+
+// ============================================================================
+// BLOCKCHAIN INTEGRATION TABLES
+// ============================================================================
+
+model CreatorMilestone {
+  id        String  @id @default(cuid())
+  creatorId String
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  // Milestone details
+  type        MilestoneType
+  threshold   Int // The threshold value
+  description String
+
+  // Achievement tracking
+  currentValue Int // Current metric value when milestone was hit
+  achievedAt   DateTime @default(now())
+
+  // Blockchain integration
+  isProcessed Boolean @default(false)
+  txHash      String? // Transaction hash if this triggered blockchain action
+  blockNumber Int?
+
+  @@map("creator_milestones")
+}
+
+model OracleSyncLog {
+  id        String  @id @default(cuid())
+  creatorId String
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  // Sync details
+  operation SyncOperation
+  status    SyncStatus
+
+  // Metrics at time of sync
+  totalPlays      Int
+  followerCount   Int
+  monthlyRevenue  Decimal @db.Decimal(18, 8)
+  engagementScore Int
+
+  // Blockchain transaction details
+  txHash      String?
+  blockNumber Int?
+  gasUsed     String? // BigInt as string
+  gasPrice    String? // BigInt as string
+
+  // Error tracking
+  error    String?
+  attempts Int     @default(1)
+
+  // Timestamps
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@map("oracle_sync_logs")
+}
+
+model RevenueDistribution {
+  id        String  @id @default(cuid())
+  creatorId String
+  creator   Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  // Distribution details
+  period           String // "Q1-2024", "Q2-2024", etc.
+  totalRevenue     Decimal @db.Decimal(18, 8) // Total revenue for period
+  creatorShare     Decimal @db.Decimal(18, 8) // Creator's share (90%)
+  tokenHolderShare Decimal @db.Decimal(18, 8) // Token holders share (10%)
+
+  // Blockchain details
+  txHash        String?
+  blockNumber   Int?
+  isDistributed Boolean @default(false)
+
+  createdAt     DateTime  @default(now())
+  distributedAt DateTime?
+
+  @@map("revenue_distributions")
+}
+
+// ============================================================================
+// CREDIT SYSTEM & GAS MANAGEMENT
+// ============================================================================
+
+model UserCredits {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Credit balance
+  balance        Int @default(0) // Current available credits
+  totalEarned    Int @default(0) // Total credits ever earned
+  totalSpent     Int @default(0) // Total credits ever spent
+  totalPurchased Int @default(0) // Total credits purchased with real money
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  transactions CreditTransaction[]
+  purchases    CreditPurchase[]
+
+  @@map("user_credits")
+}
+
+model CreditTransaction {
+  id          String      @id @default(cuid())
+  userId      String
+  userCredits UserCredits @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  // Transaction details
+  type         CreditTransactionType
+  amount       Int // Credits amount (positive for earn, negative for spend)
+  balanceAfter Int // Balance after transaction
+
+  // Context
+  purpose     String // 'file_upload', 'premium_unlock', 'sponsored_upload', 'purchase', 'refund'
+  description String? // Human readable description
+
+  // Related entities
+  fileUploadId String? // If related to file upload
+  purchaseId   String? // If from credit purchase
+
+  // Cost equivalents
+  usdEquivalent Decimal? @db.Decimal(10, 4) // USD equivalent value
+  gasEquivalent Decimal? @db.Decimal(18, 8) // USDC gas equivalent
+
+  createdAt DateTime @default(now())
+
+  @@map("credit_transactions")
+}
+
+model CreditPurchase {
+  id          String      @id @default(cuid())
+  userId      String
+  userCredits UserCredits @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  // Purchase details
+  packageName   String // 'starter', 'creator', 'pro'
+  creditsAmount Int // Credits purchased
+  bonusCredits  Int     @default(0) // Bonus credits from bulk purchase
+  usdPrice      Decimal @db.Decimal(10, 2) // Price paid in USD
+
+  // Payment processing
+  paymentMethod String // 'stripe', 'paypal', 'crypto'
+  paymentId     String? // External payment processor ID
+  status        PaymentStatus @default(PENDING)
+
+  // Metadata
+  ipAddress String?
+  userAgent String?
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@map("credit_purchases")
+}
+
+model FilecoinGasTransaction {
+  id String @id @default(cuid())
+
+  // Batch information
+  batchId       String? // Groups related uploads
+  fileUploadIds String[] // Array of file upload IDs in this batch
+
+  // Gas details
+  estimatedGas  String // Estimated gas (BigInt as string)
+  actualGasUsed String? // Actual gas used (BigInt as string)
+  gasPriceUsed  String // Gas price in wei (BigInt as string)
+  totalCostUSDC Decimal @db.Decimal(18, 8) // Total cost in USDC
+
+  // Transaction details
+  txHash      String? // Blockchain transaction hash
+  blockNumber Int? // Block number when confirmed
+  status      GasTransactionStatus @default(PENDING)
+
+  // Optimization metrics
+  costSavings Decimal? @db.Decimal(18, 8) // Savings from batching
+  batchSize   Int? // Number of files in batch
+
+  // Error tracking
+  error      String? // Error message if failed
+  retryCount Int     @default(0)
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@map("filecoin_gas_transactions")
+}
+
+model SponsoredUpload {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Sponsorship details
+  reason       String // 'new_creator', 'milestone_bonus', 'promotion'
+  fileUploadId String @unique
+
+  // Cost details
+  creditsCost Int // Credits that would have been charged
+  usdValue    Decimal @db.Decimal(10, 4) // USD value of sponsorship
+  gasValue    Decimal @db.Decimal(18, 8) // Gas value covered
+
+  // Tracking
+  isRedeemed Boolean   @default(true)
+  expiresAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("sponsored_uploads")
+}
+
+// ============================================================================
+// ANALYTICS & REPORTING
+// ============================================================================
+
+model DailyStats {
+  id   String   @id @default(cuid())
+  date DateTime @db.Date
+
+  // Platform-wide metrics
+  totalPlays    Int @default(0)
+  totalUsers    Int @default(0)
+  totalCreators Int @default(0)
+  newUsers      Int @default(0)
+  newCreators   Int @default(0)
+  newTracks     Int @default(0)
+
+  // Revenue metrics
+  totalRevenue         Decimal @default(0) @db.Decimal(18, 8)
+  avgRevenuePerCreator Decimal @default(0) @db.Decimal(18, 8)
+
+  createdAt DateTime @default(now())
+
+  @@unique([date])
+  @@map("daily_stats")
+}
+
+model CreatorDailyStats {
+  id        String   @id @default(cuid())
+  creatorId String
+  date      DateTime @db.Date
+
+  // Daily metrics
+  plays        Int     @default(0)
+  likes        Int     @default(0)
+  comments     Int     @default(0)
+  shares       Int     @default(0)
+  newFollowers Int     @default(0)
+  revenue      Decimal @default(0) @db.Decimal(18, 8)
+
+  // Engagement metrics
+  engagementRate Float @default(0)
+  avgListenTime  Int   @default(0) // in seconds
+
+  createdAt DateTime @default(now())
+
+  @@unique([creatorId, date])
+  @@map("creator_daily_stats")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum MilestoneType {
+  PLAYS
+  FOLLOWERS
+  REVENUE
+  ENGAGEMENT
+
+  @@map("milestone_type")
+}
+
+enum SyncOperation {
+  UPDATE_METRICS
+  CREATE_COIN
+  DISTRIBUTE_REVENUE
+  VERIFY_CREATOR
+
+  @@map("sync_operation")
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  SUCCESS
+  FAILED
+  RETRY
+
+  @@map("sync_status")
+}
+
+enum CreditTransactionType {
+  EARN
+  SPEND
+  PURCHASE
+  REFUND
+  BONUS
+
+  @@map("credit_transaction_type")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+
+  @@map("payment_status")
+}
+
+enum GasTransactionStatus {
+  PENDING
+  SUBMITTED
+  CONFIRMED
+  FAILED
+  CANCELLED
+
+  @@map("gas_transaction_status")
+}
+
+enum FileUploadStatus {
+  PROCESSING
+  UPLOADED
+  CONFIRMED
+  PUBLISHED
+  FAILED
+  DELETED
+
+  @@map("file_upload_status")
+}

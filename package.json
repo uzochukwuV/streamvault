@@ -3,22 +3,36 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:migrate": "npx ts-node scripts/migrate-database.ts",
+    "db:studio": "npx prisma studio",
+    "oracle:sync": "npx ts-node scripts/sync-creator-metrics.ts",
+    "oracle:test": "npx ts-node -e \"import('./services/CreatorMetricsOracle').then(m => m.creatorMetricsOracle.syncAllCreatorMetrics())\"",
+    "credits:test": "npx ts-node -e \"import('./services/CreditManager').then(m => console.log('Credit system loaded successfully'))\"",
+    "gas:test": "npx ts-node -e \"import('./services/FilecoinGasManager').then(m => console.log('Gas manager loaded successfully'))\"",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@filoz/synapse-sdk": "^0.24.0-dev1",
+    "@filoz/synapse-sdk": "^0.24.0",
+    "@heroicons/react": "^2.2.0",
+    "@prisma/client": "^6.16.2",
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@tanstack/react-query": "^5.83.0",
     "@wagmi/core": "^2.17.3",
+    "dotenv": "^17.2.2",
     "ethers": "^6.14.3",
     "framer-motion": "^11.0.8",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.544.0",
     "next": "15.3.2",
     "react": "^19.0.0",
     "react-confetti": "^6.1.0",
     "react-dom": "^19.0.0",
+    "react-dropzone": "^14.3.8",
     "viem": "^2.32.0",
     "wagmi": "^2.15.7"
   },
@@ -30,7 +44,9 @@
     "eslint": "9.28.0",
     "eslint-config-next": "15.3.3",
     "pino-pretty": "^13.0.0",
+    "prisma": "^6.16.2",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

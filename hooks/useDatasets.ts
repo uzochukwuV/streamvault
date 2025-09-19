@@ -70,7 +70,7 @@ export const useDatasets = () => {
           console.log(provider)
           try {
             console.log("holla u all")
-            const pdpServer = new PDPServer(null,  "https://calibnet.pspsps.io/");
+            const pdpServer = new PDPServer(null,  provider?.products.PDP?.data.serviceURL!);
             const data = await pdpServer.getDataSet(
               dataset.pdpVerifierDataSetId
             );

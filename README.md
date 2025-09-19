@@ -1,4 +1,6 @@
 # Filecoin Synapse dApp Tutorial
+ supply mechanism (fixed? bonding curve? algorithmically adjusted?) and how the initial distribution happens (e.g., creator gets a portion, some are reserved for platform, some for sale). This is more of a tokenomics detail than an architecture one, but it's crucial for the economics.
+
 
 This repo will serve with tutorial to demonstrate how to build a decentralized application (dApp) that interacts with Filecoin Synapse - a smart-contract based marketplace for storage and other services in the Filecoin ecosystem.
 

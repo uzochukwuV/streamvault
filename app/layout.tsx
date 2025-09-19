@@ -33,18 +33,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Filecoin onchain cloud demo</title>
+        <title>StreamVault - Web3 Music Platform</title>
         <meta
           name="description"
-          content="Demo dApp Powered by synapse-sdk. Upload files to Filecoin with USDFC."
+          content="StreamVault - The Web3 music platform where creators own their content and fans invest in their success. Powered by Filecoin."
         />
         <meta
           name="keywords"
-          content="Filecoin, Demo, synapse-sdk, pdp, upload, filecoin, usdfc"
+          content="StreamVault, Web3, Music, Filecoin, Creator Economy, NFT, Music Streaming, Decentralized"
         />
-        <meta name="author" content="FIL-Builders" />
-        <meta name="viewport" content="width=device-width, initial-scale=0.6" />
-        <link rel="icon" href="/filecoin.svg" />
+        <meta name="author" content="StreamVault Team" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
         <GeolocationProvider
@@ -60,11 +60,11 @@ export default function RootLayout({
                     modalSize="compact"
                     initialChain={filecoinCalibration.id}
                   >
-                    <main className="flex flex-col min-h-screen">
+                    <main className="flex flex-col min-h-screen bg-gradient-to-b from-neutral-900 via-neutral-950 to-black">
                       <Navbar />
                       {children}
                     </main>
-                    <Footer />
+                   
                   </RainbowKitProvider>
                 </WagmiProvider>
               </QueryClientProvider>
