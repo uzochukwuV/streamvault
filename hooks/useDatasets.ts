@@ -26,7 +26,7 @@ export const useDatasets = () => {
       });
 
       // Initialize Pandora service
-      const warmStorageService = await WarmStorageService.create(
+      const warmStorageService = await WarmStorageService?.create(
         synapse.getProvider(),
         synapse.getWarmStorageAddress(),
         // synapse.getPDPVerifierAddress()
