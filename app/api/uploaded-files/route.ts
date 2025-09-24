@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Format the response
-    const formattedFiles = files.map(file => ({
+    const formattedFiles = files.map((file: any) => ({
       id: file.id,
       fileName: file.fileName,
       originalName: file.originalName,

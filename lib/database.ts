@@ -11,14 +11,14 @@ declare global {
 }
 
 // Initialize Prisma client with better error handling
-const prisma = global.__prisma || new PrismaClient({
+const prisma =  new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   errorFormat: 'pretty',
 });
 
-if (process.env.NODE_ENV === 'development') {
-  global.__prisma = prisma;
-}
+// if (process.env.NODE_ENV === 'development') {
+//   global.__prisma = prisma;
+// }
 
 export { prisma };
 
@@ -294,7 +294,7 @@ export const oracleLogDB = {
       successRate: 0,
     };
 
-    stats.forEach(stat => {
+    stats.forEach((stat: any) => {
       result.total += stat._count.status;
       if (stat.status === 'SUCCESS') result.success = stat._count.status;
       if (stat.status === 'FAILED') result.failed = stat._count.status;
@@ -488,7 +488,7 @@ export const analyticsDB = {
 
     if (!creator) return null;
 
-    const totalPlays = creator.tracks.reduce((sum, track) => sum + track.playCount, 0);
+    const totalPlays = creator.tracks.reduce((sum: any, track: any) => sum + track.playCount, 0);
 
     return {
       creatorId,

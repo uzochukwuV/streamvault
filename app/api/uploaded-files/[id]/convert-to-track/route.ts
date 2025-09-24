@@ -66,7 +66,7 @@ export async function POST(
     }
 
     // Create the track in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Create the track
       const track = await tx.track.create({
         data: {

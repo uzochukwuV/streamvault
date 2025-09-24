@@ -110,7 +110,7 @@ export async function GET(
           isVerified: track.creator.user.isVerified,
         } : null,
       },
-      likes: track.likes.map(like => ({
+      likes: track.likes.map((like: any) => ({
         userId: like.userId,
         user: {
           username: like.user.username,
@@ -118,7 +118,7 @@ export async function GET(
           profileImage: like.user.profileImage,
         }
       })),
-      comments: track.comments.map(comment => ({
+      comments: track.comments.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
         createdAt: comment.createdAt.toISOString(),
@@ -128,7 +128,7 @@ export async function GET(
           profileImage: comment.user.profileImage,
         }
       })),
-      recentPlays: track.plays.map(play => ({
+      recentPlays: track.plays.map((play: any) => ({
         id: play.id,
         duration: play.duration,
         completedAt: play.completedAt.toISOString(),
