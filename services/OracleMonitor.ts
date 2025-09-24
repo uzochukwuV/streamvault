@@ -458,7 +458,14 @@ export class OracleMonitor {
    */
   exportHealthReport(): {
     generatedAt: Date;
-    systemStatus: ReturnType<typeof this.getSystemStatus>;
+    systemStatus: {
+      status: 'healthy' | 'degraded' | 'critical';
+      activeAlerts: number;
+      criticalAlerts: number;
+      lastHealthCheck: Date | null;
+      uptime: string;
+      recommendations: string[];
+    };
     recentMetrics: HealthMetrics[];
     activeAlerts: Alert[];
     errorBreakdown: any;

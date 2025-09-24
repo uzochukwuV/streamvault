@@ -177,12 +177,12 @@ export class BlockchainErrorHandler {
     blockNumber: number;
   }> {
     const [gasPrice, block] = await Promise.all([
-      this.provider.getGasPrice(),
+      this.provider.getFeeData(),
       this.provider.getBlock('latest')
     ]);
 
     return {
-      gasPrice,
+      gasPrice: gasPrice.gasPrice || BigInt(2000) ,
       baseFee: block?.baseFeePerGas || undefined,
       blockNumber: block?.number || 0
     };

@@ -16,12 +16,12 @@ import { DATA_SET_CREATION_FEE } from "@/utils/constants";
 export const fetchWarmStorageCosts = async (
   synapse: Synapse
 ): Promise<StorageCosts> => {
-  const warmStorageService = new WarmStorageService(
+  const warmStorageService = await WarmStorageService.create(
     synapse.getProvider(),
     synapse.getWarmStorageAddress(),
-    synapse.getPDPVerifierAddress()
+    // synapse.getPDPVerifierAddress()
   );
-  return warmStorageService.getServicePrice();
+  return await warmStorageService.getServicePrice();
 };
 
 /**
@@ -36,10 +36,10 @@ export const fetchWarmStorageBalanceData = async (
   storageCapacityBytes: number,
   persistencePeriodDays: number
 ): Promise<WarmStorageBalance> => {
-  const warmStorageService = new WarmStorageService(
+  const warmStorageService =await WarmStorageService.create(
     synapse.getProvider(),
     synapse.getWarmStorageAddress(),
-    synapse.getPDPVerifierAddress()
+    // synapse.getPDPVerifierAddress()
   );
   return warmStorageService.checkAllowanceForStorage(
     storageCapacityBytes,
