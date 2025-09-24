@@ -29,6 +29,9 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useLatestContent, useTrendingContent } from '@/hooks/useContent';
 import { useAudioPlayer, type Track } from '@/hooks/useAudioPlayer';
 import Link from 'next/link';
+import OnboardingModal from '@/components/onboarding/OnboardingModal';
+import { useOnboarding } from '@/hooks/useOnboarding';
+import { useAccount } from 'wagmi';
 
 // StreamVault Web3-enhanced UI
 // - Dark, glassy aesthetic
@@ -442,9 +445,12 @@ function formatTime(sec: any) {
 
 export default function StreamVaultApp() {
   const [search, setSearch] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Real authentication and data hooks
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { completeOnboarding, isLoading: onboardingLoading } = useOnboarding();
+  const { address } = useAccount();
   const { stats, isLoading: statsLoading } = useDashboardStats();
   const { tracks: latestTracks } = useLatestContent(12);
   const { tracks: trendingTracks } = useTrendingContent(8);
@@ -478,6 +484,29 @@ export default function StreamVaultApp() {
       audioPlayer.setQueue(trackQueue);
     }
   }, [trackQueue, audioPlayer]);
+
+  // Check if user needs onboarding (new user without proper profile)
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Check if user needs onboarding
+      const needsOnboarding = !user.username || user.username.startsWith('user_');
+      setShowOnboarding(needsOnboarding);
+    }
+  }, [isAuthenticated, user]);
+
+  const handleOnboardingComplete = async (profile: any) => {
+    try {
+      if (!address) return;
+
+      await completeOnboarding(profile, address);
+      setShowOnboarding(false);
+
+      // Refresh the page to get updated user data
+      window.location.reload();
+    } catch (error) {
+      console.error('Onboarding failed:', error);
+    }
+  };
 
   // Real metrics from database
   const offChain = {
@@ -739,6 +768,13 @@ export default function StreamVaultApp() {
             </div>
           </div>
         )}
+
+        {/* Onboarding Modal */}
+        <OnboardingModal
+          isOpen={showOnboarding}
+          onComplete={handleOnboardingComplete}
+          userWalletAddress={address}
+        />
       </div>
   );
 }

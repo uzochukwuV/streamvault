@@ -48,9 +48,6 @@ interface MusicMetadata {
 }
 
 export default function CreatorUploadTSX() {
-  const [connected, setConnected] = useState(false);
-  const [address, setAddress] = useState<string>("");
-  const [coinBalance, setCoinBalance] = useState<number>(20);
 
   // Music metadata state
   const [metadata, setMetadata] = useState<MusicMetadata>({
@@ -90,11 +87,7 @@ export default function CreatorUploadTSX() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const mockConnect = () => {
-    setConnected(true);
-    setAddress("0xAB12cd34EF56gh78");
-    setCoinBalance(20);
-  };
+  
 
   const onDropFile = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -151,10 +144,7 @@ export default function CreatorUploadTSX() {
   };
 
   const startUpload = async () => {
-    if (!connected) {
-      setAlert({ type: "error", message: "Please connect your wallet first." });
-      return;
-    }
+    
     if (!audioFile) {
       setAlert({ type: "error", message: "No audio file selected." });
       return;
@@ -272,23 +262,7 @@ export default function CreatorUploadTSX() {
                 <p className="text-gray-300 mt-2">Share your creativity with the world on Filecoin</p>
               </div>
 
-              {connected ? (
-                <div className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/10">
-                  <Wallet className="w-5 h-5 text-blue-400" />
-                  <div className="text-sm">
-                    <div className="font-semibold">{address.slice(0, 6)}...{address.slice(-4)}</div>
-                    <div className="text-gray-400">{coinBalance} SV Credits</div>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={mockConnect}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2"
-                >
-                  <Wallet className="w-4 h-4" />
-                  Connect Wallet
-                </button>
-              )}
+             
             </div>
 
             {/* Alert */}
