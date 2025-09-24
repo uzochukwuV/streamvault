@@ -62,16 +62,14 @@ export async function POST(request: NextRequest) {
       coverImagePath = `/uploads/creators/${fileName}`;
     }
 
-    // Create or update user
+    // Create or update user (find by username since walletAddress moved to Creator)
     const user = await prisma.user.upsert({
-      where: { walletAddress },
+      where: { username: artistName },
       update: {
-        walletAddress,
         lastActiveAt: new Date(),
         profileImage: profileImagePath
       },
       create: {
-        walletAddress,
         lastActiveAt: new Date(),
         profileImage: profileImagePath,
         username: artistName,
@@ -83,25 +81,16 @@ export async function POST(request: NextRequest) {
     const creator = await prisma.creator.upsert({
       where: { userId: user.id },
       update: {
+        walletAddress,
         description: bio,
-        genre : [genre],
-       
-        // coverImageUrl: coverImagePath,
-        // socialLinks: socialLinks,
-        // isVerified: false,
-        // isActive: true,
+        genre: [genre],
       },
       create: {
         userId: user.id,
-        
+        walletAddress,
+        stageName: artistName,
         description: bio,
-        genre : [genre],
-        stageName: ""
-       
-        // coverImageUrl: coverImagePath,
-        // socialLinks: socialLinks,
-        // isVerified: false,
-        // isActive: true,
+        genre: [genre],
       }
     });
 
@@ -142,7 +131,7 @@ export async function POST(request: NextRequest) {
       },
       user: {
         id: user.id,
-        walletAddress: user.walletAddress,
+        walletAddress: creator.walletAddress,
       }
     });
 

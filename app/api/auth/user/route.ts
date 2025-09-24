@@ -13,14 +13,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Try to find existing user
-    let user = await prisma.user.findUnique({
+    // Try to find existing creator first (since walletAddress is now on Creator)
+    let creator = await prisma.creator.findUnique({
       where: { walletAddress },
       include: {
-        creator: true,
-        credits: true,
+        user: {
+          include: {
+            creator: true,
+            credits: true,
+          }
+        }
       },
     });
+
+    let user = creator?.user;
     console.log(user)
 
     // Create new user if doesn't exist
@@ -48,13 +54,18 @@ export async function POST(request: NextRequest) {
 
       user = await prisma.user.create({
         data: {
-          walletAddress,
           username,
           displayName: `User ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`,
           credits: {
             create: {
               balance: 100, // Welcome bonus
               totalEarned: 100,
+            }
+          },
+          creator: {
+            create: {
+              walletAddress,
+              stageName: username,
             }
           }
         },
@@ -83,14 +94,12 @@ export async function POST(request: NextRequest) {
       id: user.id,
       username: user.username,
       displayName: user.displayName,
-      walletAddress: user.walletAddress,
+      walletAddress: user.creator?.walletAddress,
       profileImage: user.profileImage,
       bio: user.bio,
       isVerified: user.isVerified,
       isPremium: user.isPremium,
-      followerCount: user.followerCount,
       followingCount: user.followingCount,
-      totalPlays: user.totalPlays,
       creator: user.creator ? {
         id: user.creator.id,
         stageName: user.creator.stageName,
