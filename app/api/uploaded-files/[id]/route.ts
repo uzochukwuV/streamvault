@@ -4,7 +4,7 @@ import { prisma } from '@/lib/database';
 // GET single uploaded file
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: Promise<string> } }
+  { params }: any 
 ) {
   try {
     const  id  = await params.id;
