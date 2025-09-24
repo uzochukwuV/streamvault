@@ -13,8 +13,8 @@
     "oracle:sync": "npx ts-node scripts/sync-creator-metrics.ts",
     "oracle:test": "npx ts-node -e \"import('./services/CreatorMetricsOracle').then(m => m.creatorMetricsOracle.syncAllCreatorMetrics())\"",
     "credits:test": "npx ts-node -e \"import('./services/CreditManager').then(m => console.log('Credit system loaded successfully'))\"",
-    "gas:test": "npx ts-node -e \"import('./services/FilecoinGasManager').then(m => console.log('Gas manager loaded successfully'))\"",
-    "postinstall": "prisma generate"
+    "gas:test": "npx ts-node -e \"import('./services/FilecoinGasManager').then(m => console.log('Gas manager loaded successfully'))\""
+    
   },
   "dependencies": {
     "@filoz/synapse-sdk": "^0.24.0",
