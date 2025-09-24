@@ -53,7 +53,7 @@ export const downloadFile = async (
       // Extract image files (cover art)
       else if (fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
         const mimeType = getMimeTypeFromExtension(fileName);
-        coverImage = new File([fileContent], fileName, { type: mimeType });
+        coverImage = new File([new Uint8Array(fileContent)], fileName, { type: mimeType });
         imageUrl = URL.createObjectURL(coverImage);
       }
     }
