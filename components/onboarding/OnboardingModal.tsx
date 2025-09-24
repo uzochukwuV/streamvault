@@ -61,7 +61,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-zinc-900">Welcome to StreamVault</h2>
-              <p className="text-zinc-500 text-sm mt-1">Let's set up your profile</p>
+              <p className="text-zinc-500 text-sm mt-1">Let&apos;s set up your profile</p>
             </div>
             <div className="text-xs text-zinc-400">
               {step}/{profile.userType === 'creator' ? '4' : '3'}
@@ -311,7 +311,7 @@ const ListenerSetupStep: React.FC<{
       <div className="bg-zinc-50 p-4 rounded-md">
         <h4 className="font-medium text-zinc-900 mb-1">Welcome bonus</h4>
         <p className="text-sm text-zinc-600">
-          You've received <strong>100 credits</strong> to start discovering music.
+          You&apos;ve received <strong>100 credits</strong> to start discovering music.
         </p>
       </div>
 
@@ -492,7 +492,7 @@ const CreatorFinalizationStep: React.FC<{
       <div className="bg-zinc-50 p-4 rounded-md">
         <h4 className="font-medium text-zinc-900 mb-1">Creator bonus</h4>
         <p className="text-sm text-zinc-600">
-          You've received <strong>75 credits</strong> to upload your first tracks.
+          You&apos;ve received <strong>75 credits</strong> to upload your first tracks.
         </p>
       </div>
 
