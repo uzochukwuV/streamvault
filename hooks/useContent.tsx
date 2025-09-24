@@ -308,7 +308,7 @@ export function useContent(): UseContentHook {
     }
 
     return useContentFetch(`/api/content/search${buildQueryString({
-      q: query,
+      // q: query,
       ...filters
     })}`);
   };

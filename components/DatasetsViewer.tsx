@@ -36,7 +36,7 @@ export const DatasetsViewer = () => {
             (dataset: DataSet | undefined) =>
               dataset && (
                 <div
-                  key={dataset.railId}
+                  key={dataset.cdnRailId}
                   className="bg-gray-50 rounded-lg p-4 border border-gray-200"
                 >
                   <div className="flex justify-between items-start mb-4">
