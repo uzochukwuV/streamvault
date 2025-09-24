@@ -124,16 +124,16 @@ export async function POST(request: NextRequest) {
     const response = {
       success: true,
       user: {
-        id: user.id,
-        username: user.username,
-        displayName: user.displayName,
-        bio: user.bio,
-        isVerified: user.isVerified,
-        isPremium: user.isPremium,
+        id: user!.id,
+        username: user!.username,
+        displayName: user!.displayName,
+        bio: user!.bio,
+        isVerified: user!.isVerified,
+        isPremium: user!.isPremium,
         userType,
         credits: {
-          balance: user.credits?.balance || 0,
-          totalEarned: user.credits?.totalEarned || 0,
+          balance: user!.credits?.balance || 0,
+          totalEarned: user!.credits?.totalEarned || 0,
         }
       },
       creator: creator ? {
