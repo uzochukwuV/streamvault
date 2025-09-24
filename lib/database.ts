@@ -7,7 +7,7 @@ import { PrismaClient } from '../app/generated/prisma';
 
 // Global variable to store the Prisma client instance
 declare global {
-  var __prisma: PrismaClient | undefined;
+  let __prisma: PrismaClient | undefined;
 }
 
 // Initialize Prisma client with better error handling

@@ -149,7 +149,7 @@ export function OnboardingModal({ isOpen, onClose, onComplete, user }: Onboardin
                     </h2>
                     <p className="text-gray-300 text-lg leading-relaxed">
                       StreamVault is a Web3 music platform where you truly own your content.
-                      Let's set up your profile and get you started!
+                      Let&lsquo;s set up your profile and get you started!
                     </p>
                   </div>
 
@@ -194,7 +194,7 @@ export function OnboardingModal({ isOpen, onClose, onComplete, user }: Onboardin
                       Complete Your Profile
                     </h2>
                     <p className="text-gray-300 text-center">
-                      Let's make your profile uniquely yours
+                      Let&lsquo;s make your profile uniquely yours
                     </p>
                   </div>
 
@@ -418,7 +418,7 @@ export function OnboardingModal({ isOpen, onClose, onComplete, user }: Onboardin
                     Welcome to StreamVault!
                   </h2>
                   <p className="text-gray-300 text-lg mb-8">
-                    Your {isCreator ? 'creator' : 'fan'} profile is all set up. You've received{' '}
+                    Your {isCreator ? 'creator' : 'fan'} profile is all set up. You&lsquo;ve received{' '}
                     <span className="text-yellow-400 font-semibold">
                       {isCreator ? '600' : '100'} SV credits
                     </span>{' '}
@@ -426,7 +426,7 @@ export function OnboardingModal({ isOpen, onClose, onComplete, user }: Onboardin
                   </p>
 
                   <div className="bg-white/5 rounded-2xl p-6 mb-8">
-                    <h3 className="text-xl font-semibold text-white mb-4">What's Next?</h3>
+                    <h3 className="text-xl font-semibold text-white mb-4">What&lsquo;s Next?</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {isCreator ? (
                         <>

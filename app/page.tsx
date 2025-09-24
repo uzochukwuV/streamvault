@@ -344,7 +344,7 @@ function TestimonialsSection() {
                 </div>
 
                 <p className="text-gray-300 text-lg leading-relaxed">
-                  "{testimonials[currentTestimonial].content}"
+                  {testimonials[currentTestimonial].content}
                 </p>
               </div>
             </motion.div>
