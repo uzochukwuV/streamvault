@@ -66,12 +66,12 @@ export const DatasetsViewer = () => {
                           className="cursor-pointer"
                           onClick={() => {
                             navigator.clipboard.writeText(
-                              dataset.provider?.serviceURL || ""
+                              dataset.provider?.serviceProvider || ""
                             );
                             window.alert("PDP URL copied to clipboard");
                           }}
                         >
-                          {dataset.provider?.serviceURL}
+                          {dataset.provider?.serviceProvider}
                         </span>
                       </p>
                     </div>
