@@ -3,7 +3,7 @@ import { prisma } from '@/lib/database';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: Promise<string>  } }
+  { params }: any
 ) {
   try {
     const id  = await params.id;
