@@ -546,23 +546,23 @@ export default function StreamVaultApp() {
     );
   }
 
-  // Show login prompt if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-neutral-900 via-neutral-950 to-black flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Welcome to StreamVault</h1>
-          <p className="text-neutral-400 mb-6">Connect your wallet to access the dashboard</p>
-          <Link
-            href="/"
-            className="px-6 py-3 bg-gradient-to-r from-neutral-600 to-neutral-500 text-white rounded-lg hover:from-neutral-500 hover:to-neutral-400 transition-colors"
-          >
-            Go to Home
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // // Show login prompt if not authenticated
+  // if (!isAuthenticated) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-b from-neutral-900 via-neutral-950 to-black flex items-center justify-center">
+  //       <div className="text-center">
+  //         <h1 className="text-2xl font-bold text-white mb-4">Welcome to StreamVault</h1>
+  //         <p className="text-neutral-400 mb-6">Connect your wallet to access the dashboard</p>
+  //         <Link
+  //           href="/"
+  //           className="px-6 py-3 bg-gradient-to-r from-neutral-600 to-neutral-500 text-white rounded-lg hover:from-neutral-500 hover:to-neutral-400 transition-colors"
+  //         >
+  //           Go to Home
+  //         </Link>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const creators = stats?.topCreators?.map(creator => ({
     id: creator.id,
