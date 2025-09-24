@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         const includeDatasetCreationFee = !datasetExists;
 
         // Create a mock file object for preflight check using the ZIP bundle
-        const bundleFile = new File([zipBuffer], bundleFileName, {
+        const bundleFile = new File([new Uint8Array(zipBuffer)], bundleFileName, {
             type: 'application/zip'
         });
 
