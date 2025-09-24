@@ -67,13 +67,15 @@ export async function POST(request: NextRequest) {
       where: { walletAddress },
       update: {
         walletAddress,
-        lastActive: new Date(),
+        lastActiveAt: new Date(),
+        profileImage: profileImagePath
       },
       create: {
         walletAddress,
-        userType: 'CREATOR',
-        isActive: true,
-        lastActive: new Date(),
+        lastActiveAt: new Date(),
+        profileImage: profileImagePath,
+        username: artistName,
+        displayName: artistName
       }
     });
 
@@ -81,25 +83,25 @@ export async function POST(request: NextRequest) {
     const creator = await prisma.creator.upsert({
       where: { userId: user.id },
       update: {
-        artistName,
-        bio,
-        genre,
-        profileImageUrl: profileImagePath,
-        coverImageUrl: coverImagePath,
-        socialLinks: socialLinks,
-        isVerified: false,
-        isActive: true,
+        description: bio,
+        genre : [genre],
+       
+        // coverImageUrl: coverImagePath,
+        // socialLinks: socialLinks,
+        // isVerified: false,
+        // isActive: true,
       },
       create: {
         userId: user.id,
-        artistName,
-        bio,
-        genre,
-        profileImageUrl: profileImagePath,
-        coverImageUrl: coverImagePath,
-        socialLinks: socialLinks,
-        isVerified: false,
-        isActive: true,
+        
+        description: bio,
+        genre : [genre],
+        stageName: ""
+       
+        // coverImageUrl: coverImagePath,
+        // socialLinks: socialLinks,
+        // isVerified: false,
+        // isActive: true,
       }
     });
 
@@ -133,10 +135,10 @@ export async function POST(request: NextRequest) {
       success: true,
       creator: {
         id: creator.id,
-        artistName: creator.artistName,
+        artistName: user.username,
         genre: creator.genre,
-        profileImageUrl: creator.profileImageUrl,
-        coverImageUrl: creator.coverImageUrl,
+        profileImageUrl: user.profileImage,
+        // coverImageUrl: creator.coverImageUrl,
       },
       user: {
         id: user.id,
