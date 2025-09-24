@@ -46,7 +46,7 @@ export const downloadFile = async (
       // Extract audio files (MP3, WAV, FLAC, etc.)
       else if (fileName.match(/\.(mp3|wav|flac|m4a|aac|ogg)$/i)) {
         const mimeType = getMimeTypeFromExtension(fileName);
-        audioFile = new File([fileContent], fileName, { type: mimeType });
+        audioFile = new File([new Uint8Array(fileContent)], fileName, { type: mimeType });
         audioUrl = URL.createObjectURL(audioFile);
       }
 
