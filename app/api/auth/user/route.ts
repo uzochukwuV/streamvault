@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Try to find existing creator first (since walletAddress is now on Creator)
-    let creator = await prisma.creator.findUnique({
+    const creator = await prisma.creator.findUnique({
       where: { walletAddress },
       include: {
         user: {
