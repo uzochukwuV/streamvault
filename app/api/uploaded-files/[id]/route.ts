@@ -86,7 +86,7 @@ export async function GET(
 // PATCH update uploaded file metadata
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any 
 ) {
   try {
     const { id } = params;
@@ -180,7 +180,7 @@ export async function PATCH(
 // DELETE uploaded file
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const { id } = params;
