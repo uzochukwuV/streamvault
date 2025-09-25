@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Try to find existing creator first (since walletAddress is now on Creator)
-    const user = await prisma.user!.findUnique({
+    // Try to find existing user first (walletAddress is back on User model)
+    let user = await prisma.user.findUnique({
       where: { walletAddress },
       include: {
         creator: true,
@@ -24,23 +24,24 @@ export async function POST(request: NextRequest) {
 
     console.log(user)
 
-
-    if (!user){
+    if (!user) {
       // Create new user if doesn't exist
-   
-      // Update last active time
-     
+      throw Error("error")
+    } else {
+      // Update last active time for existing user
       try {
-        const vuser = await prisma.user!.create({
-         
-          data: { walletAddress, username: walletAddress, displayName: walletAddress },
-         
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { lastActiveAt: new Date() },
+          include: {
+            creator: true,
+            credits: true
+          }
         });
       } catch (updateError) {
         console.error('Failed to update user lastActiveAt:', updateError);
         // Continue with the existing user data if update fails
       }
-    
     }
 
     // Format response
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
       id: user!.id,
       username: user!.username,
       displayName: user!.displayName,
-      walletAddress: user!.creator?.walletAddress,
+      walletAddress: user!.walletAddress,
       profileImage: user!.profileImage,
       bio: user!.bio,
       isVerified: user!.isVerified,
@@ -59,7 +60,6 @@ export async function POST(request: NextRequest) {
         stageName: user!.creator.stageName,
         genre: user!.creator.genre,
         description: user!.creator.description,
-        walletAddress: user!.creator.walletAddress,
         totalPlays: user!.creator.totalPlays,
         monthlyPlays: user!.creator.monthlyPlays,
         followerCount: user!.creator.followerCount,

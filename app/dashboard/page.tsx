@@ -89,23 +89,6 @@ function IconButton({ children, className = "", onClick }: any) {
   );
 }
 
-function WalletConnect({ connected, onConnect, address, balance }: any) {
-  return (
-    <div className="flex items-center gap-3">
-      {connected ? (
-        <div className="flex items-center gap-3 bg-white/5 p-2 rounded-full">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 grid place-items-center text-sm font-bold">W</div>
-          <div className="text-xs">
-            <div className="font-semibold">{shorten(address)}</div>
-            <div className="text-gray-400">{balance} SV</div>
-          </div>
-        </div>
-      ) : (
-        <button onClick={onConnect} className="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 rounded-full font-semibold">Connect Wallet</button>
-      )}
-    </div>
-  );
-}
 
 
 
@@ -116,7 +99,9 @@ function shorten(addr = "") {
 }
 
 
-function Topbar({ onSearch, connected, onConnect, address, balance }: any) {
+function Topbar({ onSearch, connected, onConnect, address, balance, onStartOnboarding, user }: any) {
+  const needsOnboarding = !user?.username || user?.username.startsWith('user_') || !user?.credits;
+
   return (
     <header className="flex items-center justify-between py-4 px-6 bg-transparent">
       <div className="flex items-center gap-4">
@@ -130,7 +115,18 @@ function Topbar({ onSearch, connected, onConnect, address, balance }: any) {
       </div>
 
       <div className="flex items-center gap-4">
-        <WalletConnect connected={connected} onConnect={onConnect} address={address} balance={balance} />
+        {/* Onboarding Button */}
+        <button
+          onClick={onStartOnboarding}
+          className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+            needsOnboarding
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 animate-pulse'
+              : 'bg-white/10 text-gray-300 hover:bg-white/15'
+          }`}
+        >
+          {needsOnboarding ? 'Complete Setup' : 'Profile Setup'}
+        </button>
+
         <div className="flex items-center gap-4">
           <button className="bg-white/5 rounded-full p-2">
             <Bell className="w-5 h-5 text-white" />
@@ -138,7 +134,9 @@ function Topbar({ onSearch, connected, onConnect, address, balance }: any) {
           <div className="flex items-center gap-2">
             <img src="https://i.pravatar.cc/40?img=32" className="w-9 h-9 rounded-full" />
             <div className="text-right">
-              <div className="text-sm font-semibold">0xF9...12A</div>
+              <div className="text-sm font-semibold">
+                {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '0xF9...12A'}
+              </div>
               <div className="text-xs text-gray-400">Wallet Connected</div>
             </div>
           </div>
@@ -614,10 +612,33 @@ export default function StreamVaultApp() {
           connected={isAuthenticated}
           onConnect={() => {}}
           address={user?.walletAddress}
+          user={user}
+          onStartOnboarding={() => setShowOnboarding(true)}
           balance={user?.credits?.balance || 0}
         />
 
-        <OracleBanner status="active" />
+        {/* <OracleBanner status="active" /> */}
+
+        {/* Onboarding Banner for incomplete profiles */}
+        {user && (!user.username || user.username.startsWith('user_') || !user.credits) && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 flex items-center gap-4">
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-full p-2">
+              <CogIcon className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-white">Complete Your Profile Setup</div>
+              <div className="text-xs text-gray-300">
+                Set up your profile to get started with StreamVault. Choose between listener or creator mode.
+              </div>
+            </div>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg text-sm font-medium hover:from-purple-500 hover:to-pink-500 transition-colors"
+            >
+              Get Started
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">

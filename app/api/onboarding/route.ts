@@ -22,12 +22,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingCreator = await prisma.creator.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { walletAddress },
-      include: { user: true }
+      include: { creator: true }
     });
 
-    if (existingCreator) {
+    if (existingUser) {
       return NextResponse.json(
         { error: 'User already exists' },
         { status: 409 }
@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
         data: {
           username: displayName.toLowerCase().replace(/\s+/g, '_'),
           displayName,
+          walletAddress,
           bio,
           credits: {
             create: {
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
         data: {
           username: stageName.toLowerCase().replace(/\s+/g, '_'),
           displayName,
+          walletAddress,
           bio,
           credits: {
             create: {
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
               stageName,
               description: creatorBio,
               genre: genres,
-              walletAddress,
+              
             }
           }
         },

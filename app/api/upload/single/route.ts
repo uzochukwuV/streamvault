@@ -93,17 +93,15 @@ export async function POST(request: NextRequest) {
                 throw new Error('Wallet address is required');
             }
 
-            // Find user/creator by wallet address (since wallet is now on Creator model)
+            // Find user by wallet address (walletAddress is back on User model)
             let user = await prisma.user.findUnique({
                 where: { walletAddress },
                 include: {
-                   creator: true
+                    creator: true
                 }
             });
 
-            // let user = creator?.user;
-
-            // If no creator exists, create user and creator
+            // If user doesn't exist, create user and creator
             if (!user) {
                 user = await prisma.user.create({
                     data: {
@@ -114,8 +112,7 @@ export async function POST(request: NextRequest) {
                             create: {
                                 stageName: metadata.artist,
                                 genre: [metadata.genre],
-                                description: metadata.description || `Music by ${metadata.artist}`,
-                                walletAddress: walletAddress
+                                description: metadata.description || `Music by ${metadata.artist}`
                             }
                         }
                     },
@@ -123,8 +120,6 @@ export async function POST(request: NextRequest) {
                         creator: true
                     }
                 });
-
-              
             }
 
             // 3) Create Synapse instance
