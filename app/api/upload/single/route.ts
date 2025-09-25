@@ -10,9 +10,10 @@ import { config } from '@/config';
 import { formatUnits } from 'ethers';
 import JSZip from 'jszip';
 import { prisma } from '@/lib/database';
+import { error } from 'console';
 
 
-const privateKey = "0x"+ process.env.PRIVATE_KEY as `0x${string}`
+const privateKey = "0x" + process.env.PRIVATE_KEY as `0x${string}`
 
 // Admin endpoint to manage backend wallet
 export async function POST(request: NextRequest) {
@@ -78,141 +79,160 @@ export async function POST(request: NextRequest) {
 
         // Use ZIP buffer as the file to upload
         const bundleFileName = `music_bundle_${Date.now()}_${metadata.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'untitled'}.zip`;
-        
+
         const address = privateKeyToAddress(privateKey)
 
-        
-        // 3) Create Synapse instance
-        const synapse = await Synapse.create({
-            privateKey: privateKey,
-            rpcURL: "https://api.calibration.node.glif.io/rpc/v1",
-            disableNonceManager: false,
-            withCDN: true,
-        }).catch((err)=>{
-            console.log(err)
-        });
-        console.log(synapse)
-        const { providerId, dataset } = await getDataset(synapse!, address);
-        // 5) Check if we have a dataset
-        const datasetExists = !!providerId;
-        console.log("PAssed Preflight")
-        await paymentCheck(synapse!, address);
-        // Include dataset creation fee if no dataset exists
-        const includeDatasetCreationFee = !datasetExists;
 
-        // Create a mock file object for preflight check using the ZIP bundle
-        const bundleFile = new File([new Uint8Array(zipBuffer)], bundleFileName, {
-            type: 'application/zip'
-        });
 
-        await preflightCheck(
-            bundleFile,
-            synapse!,
-            includeDatasetCreationFee,
-            (status) => { console.log('Status:', status); },
-            (progress) => { console.log('Progress:', progress); }
-        );
-
-          console.log("PAssed Preflight")
-        if (providerId) {
-            console.log(providerId)
-            const provider = await synapse!.getProviderInfo(providerId);
-            if (!provider || !provider.active) {
-                throw new Error(`Storage provider ${providerId} is not available or inactive`);
-            }
-        }
-        console.log(dataset)
-
-        
-
-        const storageService = await synapse?.createStorage({
-            providerId: dataset?.providerId,
-            forceCreateDataSet: false,
-            uploadBatchSize: 2,
-            withCDN: true
-        })
-        console.log(storageService)
-        // Upload the ZIP bundle to Filecoin
-        const { pieceCid } = await storageService!.upload(zipBuffer, {
-            onUploadComplete: (piece) => {
-              console.log(
-                `📦 ZIP bundle uploaded successfully! Bundle size: ${piece} bytes`
-              );
-              console.log(`🎵 Contains: ${audioFileName}${coverImage ? `, cover image` : ''}, metadata.json`);
-            },
-            onPieceAdded: (transactionResponse) => {
-              console.log(
-                `🔄 Waiting for transaction to be confirmed on chain${
-                  transactionResponse ? `(txHash: ${transactionResponse.hash})` : ""
-                }`
-              );
-              if (transactionResponse) {
-                console.log("Transaction response:", transactionResponse);
-                
-              }
-            },
-            onPieceConfirmed: (pieceIds) => {
-              console.log("🌳 Data pieces added to dataset successfully");
-              
-            },
-          });
         // Save upload information to database
         try {
-            // Create or find user (in a real app, this would come from authentication)
+            // Get wallet address from form data
+            const walletAddress = formData.get('walletAddress') as string;
+
+            if (!walletAddress) {
+                throw new Error('Wallet address is required');
+            }
+
+            // Find user/creator by wallet address (since wallet is now on Creator model)
             let user = await prisma.user.findUnique({
-                where: { username: 'demo-user' } // This should be from auth context
-            });
-
-            if (!user) {
-                user = await prisma.user.create({
-                    data: {
-                        username: 'demo-user',
-                        displayName: metadata.artist || 'Demo User',
-                        walletAddress: address
-                    }
-                });
-            }
-
-            // Create or find creator
-            let creator = await prisma.creator.findUnique({
-                where: { userId: user.id }
-            });
-
-            if (!creator) {
-                creator = await prisma.creator.create({
-                    data: {
-                        userId: user.id,
-                        stageName: metadata.artist,
-                        genre: [metadata.genre],
-                        description: metadata.description || `Music by ${metadata.artist}`,
-                        walletAddress: address
-                    }
-                });
-            }
-
-            // Save uploaded file record
-            const uploadedFile = await prisma.uploadedFile.create({
-                data: {
-                    fileName: bundleFileName,
-                    originalName: audioFile.name,
-                    fileSize: audioFile.size,
-                    mimeType: 'application/zip', // ZIP bundle
-                    fileHash: pieceCid.toString(),
-                    pieceCid: pieceCid.toV1.toString(),
-                    storageProvider: dataset?.providerId.toString() || "0",
-                    uploadStatus: 'UPLOADED',
-                    duration: metadata.duration || null,
-                    genre: metadata.genre,
-                    tags: metadata.tags || [],
-                    isPublic: !metadata.isPremium,
-                    isPremium: metadata.isPremium || false,
-                    userId: user.id,
-                    creatorId: creator.id,
-                    creditsCost: 0 // This should be calculated based on file size and current rates
+                where: { walletAddress },
+                include: {
+                   creator: true
                 }
             });
 
-            console.log('Database record created:', uploadedFile.id);
+            // let user = creator?.user;
+
+            // If no creator exists, create user and creator
+            if (!user) {
+                user = await prisma.user.create({
+                    data: {
+                        username: `user_${walletAddress.slice(2, 8)}`,
+                        displayName: metadata.artist || 'Demo User',
+                        walletAddress: walletAddress,
+                        creator: {
+                            create: {
+                                stageName: metadata.artist,
+                                genre: [metadata.genre],
+                                description: metadata.description || `Music by ${metadata.artist}`,
+                                walletAddress: walletAddress
+                            }
+                        }
+                    },
+                    include: {
+                        creator: true
+                    }
+                });
+
+              
+            }
+
+            // 3) Create Synapse instance
+            const synapse = await Synapse.create({
+                privateKey: privateKey,
+                rpcURL: "https://api.calibration.node.glif.io/rpc/v1",
+                disableNonceManager: false,
+                withCDN: true,
+            }).catch((err) => {
+                console.log(err)
+            });
+            console.log(synapse)
+            const { providerId, dataset } = await getDataset(synapse!, address);
+            // 5) Check if we have a dataset
+            const datasetExists = !!providerId;
+            console.log("PAssed Preflight")
+            await paymentCheck(synapse!, address);
+            // Include dataset creation fee if no dataset exists
+            const includeDatasetCreationFee = !datasetExists;
+
+            // Create a mock file object for preflight check using the ZIP bundle
+            const bundleFile = new File([new Uint8Array(zipBuffer)], bundleFileName, {
+                type: 'application/zip'
+            });
+
+            await preflightCheck(
+                bundleFile,
+                synapse!,
+                includeDatasetCreationFee,
+                (status) => { console.log('Status:', status); },
+                (progress) => { console.log('Progress:', progress); }
+            );
+
+            console.log("PAssed Preflight")
+            if (providerId) {
+                console.log(providerId)
+                const provider = await synapse!.getProviderInfo(providerId);
+                if (!provider || !provider.active) {
+                    throw new Error(`Storage provider ${providerId} is not available or inactive`);
+                }
+            }
+            console.log(dataset)
+
+
+
+            const storageService = await synapse?.createStorage({
+                providerId: dataset?.providerId,
+                forceCreateDataSet: false,
+                uploadBatchSize: 2,
+                withCDN: true
+            })
+            console.log(storageService)
+            // Upload the ZIP bundle to Filecoin
+            const { pieceCid } = await storageService!.upload(zipBuffer, {
+                onUploadComplete: (piece) => {
+                    console.log(
+                        `📦 ZIP bundle uploaded successfully! Bundle size: ${piece} bytes`
+                    );
+                    console.log(`🎵 Contains: ${audioFileName}${coverImage ? `, cover image` : ''}, metadata.json`);
+                },
+                onPieceAdded: (transactionResponse) => {
+                    console.log(
+                        `🔄 Waiting for transaction to be confirmed on chain${transactionResponse ? `(txHash: ${transactionResponse.hash})` : ""
+                        }`
+                    );
+                    if (transactionResponse) {
+                        console.log("Transaction response:", transactionResponse);
+
+                    }
+                },
+                onPieceConfirmed: (pieceIds) => {
+                    console.log("🌳 Data pieces added to dataset successfully");
+
+                },
+            });
+
+            // Check if file with this pieceCid already exists
+            const pieceCidV1 = pieceCid.toString()
+            let uploadedFile = await prisma.uploadedFile.findUnique({
+                where: { pieceCid: pieceCidV1 }
+            });
+
+            // If file doesn't exist, create new record
+            if (!uploadedFile) {
+                uploadedFile = await prisma.uploadedFile.create({
+                    data: {
+                        fileName: bundleFileName,
+                        originalName: audioFile.name,
+                        fileSize: audioFile.size,
+                        mimeType: 'application/zip', // ZIP bundle
+                        fileHash: pieceCid.toString(),
+                        pieceCid: pieceCidV1,
+                        storageProvider: dataset?.providerId.toString() || "0",
+                        uploadStatus: 'UPLOADED',
+                        duration: metadata.duration || null,
+                        genre: metadata.genre,
+                        tags: metadata.tags || [],
+                        isPublic: !metadata.isPremium,
+                        isPremium: metadata.isPremium || false,
+                        userId: user!.id,
+                        creatorId: user!.creator?.id,
+                        creditsCost: 0 // This should be calculated based on file size and current rates
+                    }
+                });
+                console.log('New database record created:', uploadedFile.id);
+            } else {
+                console.log('File already exists with pieceCid:', pieceCidV1, 'Reusing existing record:', uploadedFile.id);
+            }
 
             // Return comprehensive upload result
             return NextResponse.json({
@@ -225,8 +245,8 @@ export async function POST(request: NextRequest) {
                     address: address,
                     metadata: enhancedMetadata,
                     database: {
-                        userId: user.id,
-                        creatorId: creator.id,
+                        userId: user!.id,
+                        creatorId: user.creator!.id,
                         uploadedFileId: uploadedFile.id
                     },
                     filecoinStorage: {
@@ -243,14 +263,14 @@ export async function POST(request: NextRequest) {
                 success: true,
                 warning: 'Upload successful but database sync failed',
                 upload: {
-                    pieceCid: pieceCid,
+                    // pieceCid: pieceCid,
                     bundleSize: audioFile.size,
                     bundleFileName,
                     address: address,
                     metadata: enhancedMetadata,
                     filecoinStorage: {
-                        network: synapse!.getNetwork(),
-                        storageProvider: dataset?.providerId || 'default',
+                        // network: synapse!.getNetwork(),
+                        // storageProvider: dataset?.providerId || 'default',
                         uploadedAt: new Date().toISOString()
                     },
                     databaseError: dbError.message
@@ -270,46 +290,46 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-    
-        return NextResponse.json(
-            { status:""},
-            { status: 500 }
-        );
+
+    return NextResponse.json(
+        { status: "" },
+        { status: 500 }
+    );
 
 }
 
 
-const paymentCheck = async (synapse:Synapse, address: string,  )=> {
+const paymentCheck = async (synapse: Synapse, address: string,) => {
     const network = synapse.getNetwork();
     const paymentsAddress = CONTRACT_ADDRESSES.WARM_STORAGE[network];
-      
-      if (!paymentsAddress) {
-        throw new Error(`No WARM_STORAGE contract address configured for network: ${network}`);
-      }
-      const { dataset } = await getDataset(synapse, address);
-      const hasDataset = !!dataset;
-      const fee = hasDataset ? 0n : DATA_SET_CREATION_FEE;
-      const data = await calculateStorageMetrics(synapse)
-      const depositNeededFormatted = Number(
-        formatUnits(data?.depositNeeded ?? 0n, 18)
-      ).toFixed(3);
 
-      const amount = depositNeededFormatted + fee;
-      const allowance = await synapse.payments.allowance(
+    if (!paymentsAddress) {
+        throw new Error(`No WARM_STORAGE contract address configured for network: ${network}`);
+    }
+    const { dataset } = await getDataset(synapse, address);
+    const hasDataset = !!dataset;
+    const fee = hasDataset ? 0n : DATA_SET_CREATION_FEE;
+    const data = await calculateStorageMetrics(synapse)
+    const depositNeededFormatted = Number(
+        formatUnits(data?.depositNeeded ?? 0n, 18)
+    ).toFixed(3);
+
+    const amount = depositNeededFormatted + fee;
+    const allowance = await synapse.payments.allowance(
         paymentsAddress,
         TOKENS.USDFC,
-      );
+    );
 
-      
-      
-      if(!data.isSufficient && !data.isRateSufficient){
+
+
+    if (!data.isSufficient && !data.isRateSufficient) {
         const balance = await synapse.payments.walletBalance(TOKENS.USDFC);
 
-      if (balance < BigInt(amount)) {
-        throw new Error("Insufficient USDFC balance");
-      }
+        if (balance < BigInt(amount)) {
+            throw new Error("Insufficient USDFC balance");
+        }
         if (allowance < MAX_UINT256 / 2n) {
-        
+
             const transaction = await synapse.payments.approveService(
                 synapse.getWarmStorageAddress(),
                 data.totalLockupNeeded,
@@ -317,23 +337,23 @@ const paymentCheck = async (synapse:Synapse, address: string,  )=> {
                 TIME_CONSTANTS.EPOCHS_PER_DAY * BigInt(config.persistencePeriod)
             );
             await transaction.wait();
-           
-          }
-          if (BigInt(amount) > 0n) {
+
+        }
+        if (BigInt(amount) > 0n) {
             console.log("💰 Depositing USDFC to cover storage costs...");
             const transaction = await synapse.payments.deposit(BigInt(amount), TOKENS.USDFC);
             await transaction.wait();
             console.log("💰 Successfully deposited USDFC to cover storage costs");
-          }
-          console.log(
+        }
+        console.log(
             "💰 Approving Filecoin Warm Storage service USDFC spending rates..."
-          );
-          const transaction = await synapse.payments.approveService(
+        );
+        const transaction = await synapse.payments.approveService(
             synapse.getWarmStorageAddress(),
             data.totalLockupNeeded,
             data.rateNeeded + fee,
             TIME_CONSTANTS.EPOCHS_PER_DAY * BigInt(config.persistencePeriod)
-          );
-          await transaction.wait();
-      }
+        );
+        await transaction.wait();
+    }
 }

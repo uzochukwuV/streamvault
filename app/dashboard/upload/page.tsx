@@ -21,6 +21,7 @@ import {
   DollarSign,
   Info
 } from "lucide-react";
+import { useAccount } from "wagmi";
 
 interface Alert {
   type: "info" | "error" | "success";
@@ -48,7 +49,7 @@ interface MusicMetadata {
 }
 
 export default function CreatorUploadTSX() {
-
+  const {address}  = useAccount()
   // Music metadata state
   const [metadata, setMetadata] = useState<MusicMetadata>({
     title: "",
@@ -170,21 +171,20 @@ export default function CreatorUploadTSX() {
         description: metadata.description || `Track by ${metadata.artist}`,
         fileSize: audioFile.size,
         duration: duration || 0,
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date().toISOString(),
+        walletAddress: address
       };
 
       formData.append('metadata', JSON.stringify(completeMetadata));
-      formData.append('creatorId', 'creator-id-placeholder'); // This should come from auth
+      formData.append('creatorId', address!.toString()); // This should come from auth
+      formData.append("walletAddress", address!.toString() )
 
       setProgress(10);
       setAlert({ type: "info", message: "Uploading to Filecoin..." });
 
-      const response1 = await fetch('/api/geolocation', {
-        method: 'GET',
-        
-      });
+     
 
-      console.log(response1)
+     
       const response = await fetch('/api/upload/single', {
         method: 'POST',
         body: formData,

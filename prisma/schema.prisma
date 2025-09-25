@@ -23,6 +23,7 @@ model User {
   bio          String?
   isVerified   Boolean @default(false)
   isPremium    Boolean @default(false)
+  walletAddress String? @unique // Creator's crypto wallet for payments & coin
 
   // Basic social metrics (for non-creators)
   followingCount Int @default(0)
@@ -63,8 +64,7 @@ model Creator {
   genre       String[]
   description String?
 
-  // Blockchain integration (Creator's primary wallet)
-  walletAddress String? @unique // Creator's crypto wallet for payments & coin
+  
 
   // Analytics metrics (synced with blockchain)
   totalPlays      Int     @default(0) // Lifetime plays across all tracks

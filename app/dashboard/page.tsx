@@ -488,8 +488,14 @@ export default function StreamVaultApp() {
   // Check if user needs onboarding (new user without proper profile)
   useEffect(() => {
     if (isAuthenticated && user) {
+      console.log('Checking onboarding for user:', user);
+      console.log('Username:', user.username);
+      console.log('Credits:', user.credits);
+
       // Check if user needs onboarding
-      const needsOnboarding = !user.username || user.username.startsWith('user_');
+      const needsOnboarding = !user.username || user.username.startsWith('user_') || !user.credits;
+      console.log('Needs onboarding:', needsOnboarding);
+
       setShowOnboarding(needsOnboarding);
     }
   }, [isAuthenticated, user]);
