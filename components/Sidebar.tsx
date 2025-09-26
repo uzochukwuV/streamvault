@@ -63,7 +63,7 @@ export function Sidebar({ user, unpublishedCount = 0 }: SidebarProps) {
               <span className="text-sm font-medium">Upload Music</span>
             </Link>
           </li>
-          {user?.creator && (
+         
             <li>
               <Link
                 href="/dashboard/manage-uploads"
@@ -78,10 +78,10 @@ export function Sidebar({ user, unpublishedCount = 0 }: SidebarProps) {
                 )}
               </Link>
             </li>
-          )}
+        
         </ul>
 
-        {user?.creator && (
+         
           <div className="mt-6">
             <h4 className="text-xs text-neutral-400 uppercase tracking-wide mb-3 font-semibold">
               Creator Tools
@@ -107,7 +107,7 @@ export function Sidebar({ user, unpublishedCount = 0 }: SidebarProps) {
               </li>
             </ul>
           </div>
-        )}
+        
       </nav>
 
       <div>
